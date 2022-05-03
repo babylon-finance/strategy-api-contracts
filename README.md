@@ -10,7 +10,7 @@ Gardens are tokenized investment clubs/DAOs where users can deposit digital asse
 
 Developers can build on top of Babylon Gardens and benefit from all the following built-in features.
 
-### Built-in Features
+## Built-in Features
 
 - Garden ERC-20 tokens are **fully composable and transferrable**.
 - Gardens are **non-custodial and trust minimized**. Only users have access to their funds. Capital can only be allocated to approved strategies.
@@ -22,7 +22,7 @@ Developers can build on top of Babylon Gardens and benefit from all the followin
 
 You can read more in our [managers page](https://www.babylon.finance/managers).
 
-### Architecture
+## Architecture
 
 ![image](https://user-images.githubusercontent.com/541599/166601087-734a1c13-f979-4ec3-be8c-d1346e475c14.png)
 
