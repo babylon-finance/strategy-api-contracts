@@ -34,7 +34,12 @@ These layers of abstraction provide a high-level of isolation and composability.
 
 You have all the information in our [Litepaper](https://docs.babylon.finance/litepaper).
 
+## Smart Contracts API
+
+You can see all the functions of our main contracts, their functions and paramaters documented here.
+
+[API Docs](https://app.gitbook.com/o/-MU9cUI94K7ldAjpGj7S/s/-MU6ZbTQOlfV8oj9cw0O/developers/smart-contract-api)
+
 ## Deployed contracts
 
 You can see all the deployed [open-sourced contracts here](https://docs.babylon.finance/deployments).
-
