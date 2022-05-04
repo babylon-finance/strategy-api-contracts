@@ -1,6 +1,8 @@
 # Babylon Core-contracts
 
-This repository provides all the interfaces and helper contracts needed to start building on top of Babylon Gardens.
+This repository provides all the interfaces and helper contracts needed to start building on top of [Babylon Finance](https://babylon.finance) Gardens.
+
+
 
 ## Building on Babylon
 
