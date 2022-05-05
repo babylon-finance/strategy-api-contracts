@@ -10,7 +10,16 @@ pragma abicoder v2;
  * _Available since v4.3._
  */
 abstract contract IGovernor {
-    enum ProposalState {Pending, Active, Canceled, Defeated, Succeeded, Queued, Expired, Executed}
+    enum ProposalState {
+        Pending,
+        Active,
+        Canceled,
+        Defeated,
+        Succeeded,
+        Queued,
+        Expired,
+        Executed
+    }
 
     /**
      * @dev Emitted when a proposal is created.
