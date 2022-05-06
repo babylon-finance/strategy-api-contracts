@@ -2,8 +2,6 @@
 
 This repository provides all the interfaces and helper contracts needed to start building on top of [Babylon Finance](https://babylon.finance) Gardens.
 
-
-
 ## Building on Babylon
 
 Babylon provides a new DeFi lego building block. Babylon Gardens are the first **DeFi Investment DAO primitive (ERC-20)**.

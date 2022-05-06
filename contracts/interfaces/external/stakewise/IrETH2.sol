@@ -2,12 +2,12 @@
 
 pragma solidity ^0.7.6;
 
-import '@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol';
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
 /**
  * @dev Interface of the RewardEthToken contract.
  */
-interface IrETH2 is IERC20Upgradeable {
+interface IrETH2 is IERC20 {
     /**
      * @dev Structure for storing information about user reward checkpoint.
      * @param rewardPerToken - user reward per token.

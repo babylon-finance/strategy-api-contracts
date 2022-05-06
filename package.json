@@ -6,8 +6,6 @@
     "@nomiclabs/hardhat-ethers": "^2.0.2",
     "@nomiclabs/hardhat-etherscan": "^2.1.7",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
-    "@openzeppelin/contracts-upgradeable": "^4.3.2",
-    "@openzeppelin/hardhat-upgrades": "^1.12.0",
     "axios": "^0.24.0",
     "chai": "^4.3.4",
     "dotenv": "^10.0.0",
@@ -28,14 +26,12 @@
     "prettier": "prettier --write .",
     "lint:contracts": "solhint contracts/**/*.sol",
     "compile": "hardhat compile",
-    "test": "OPTIMIZER=false npx hardhat test test/ProphetsNFT.test.js test/ProphetsArrival.test.js",
-    "test:launch": "OPTIMIZER=false npx hardhat test test/Launch.test.js",
-    "test:full": "FULL=true OPTIMIZER=false npx hardhat test test/ProphetsNFT.test.js test/ProphetsArrival.test.js",
+    "test": "OPTIMIZER=false npx hardhat test",
     "gas-report": "REPORT_GAS=1 yarn test --network hardhat",
     "coverage": "FULL=true hardhat coverage",
     "lint:tests": "eslint 'test/**/*.test.js'"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^4.3.2"
+    "@openzeppelin/contracts": "3.4.1"
   }
 }

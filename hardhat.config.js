@@ -3,21 +3,9 @@ require('dotenv/config');
 require('@nomiclabs/hardhat-ethers');
 require('@nomiclabs/hardhat-etherscan');
 require('@nomiclabs/hardhat-waffle');
-require('@openzeppelin/hardhat-upgrades');
 require('hardhat-contract-sizer');
 require('hardhat-gas-reporter');
 require('solidity-coverage');
-
-require('./tasks/mint');
-require('./tasks/prophets');
-require('./tasks/attrs');
-require('./tasks/split');
-require('./tasks/proof');
-require('./tasks/whitelist');
-require('./tasks/upgrade-nft');
-require('./tasks/upgrade-arrival');
-require('./tasks/babl');
-require('./tasks/clear');
 
 const OPTIMIZER = !(process.env.OPTIMIZER === 'false');
 const ALCHEMY_KEY = process.env.ALCHEMY_KEY || '';
@@ -102,17 +90,11 @@ module.exports = {
   solidity: {
     compilers: [
       {
-        version: '0.8.9',
+        version: '0.7.6',
         settings: {
           optimizer: {
             enabled: OPTIMIZER,
             runs: 999,
-            details: {
-              yul: true,
-              yulDetails: {
-                stackAllocation: true,
-              },
-            },
           },
         },
       },
