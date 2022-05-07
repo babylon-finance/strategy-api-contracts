@@ -36,13 +36,11 @@ You have all the information in our [Litepaper](https://docs.babylon.finance/lit
 
 You can find a test with sample code to create gardens and strategies in the `test` folder. 
 
-To run them, follow the steps
+To run them, follow these steps
 
 1. Install dependencies with yarn ```yarn```
 2. Set `ALCHEMY_KEY` as an environment variable. You can grab a free key from [Alchemy](https://www.alchemy.com/).
-3. Execute the following command:
-
-```yarn run test```
+3. Execute the following command ```yarn run test```
 
 ![image](https://user-images.githubusercontent.com/541599/167233003-ece57ab8-b736-4d48-b832-bb689f0497f6.png)
 
