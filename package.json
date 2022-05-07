@@ -1,7 +1,7 @@
 {
   "name": "core-interfaces",
   "version": "0.1.0",
-  "license": "GNU Affero General Public License v3.0",
+  "license": "Apache-2.0",
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.2",
     "@nomiclabs/hardhat-etherscan": "^2.1.7",
