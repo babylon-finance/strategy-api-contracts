@@ -8,7 +8,7 @@ require('hardhat-gas-reporter');
 require('solidity-coverage');
 
 const OPTIMIZER = !(process.env.OPTIMIZER === 'false');
-const ALCHEMY_KEY = process.env.ALCHEMY_KEY || '';
+const ALCHEMY_KEY = process.env.ALCHEMY_KEY || 'unLwzHqjeOhHk6OesqHP4_9r-4gk16Km';
 const COINMARKETCAP_KEY = process.env.COINMARKETCAP_KEY || '';
 const ETHERSCAN_KEY = process.env.ETHERSCAN_KEY || '';
 const DEPLOYER_PRIVATE_KEY =
@@ -18,7 +18,7 @@ const OWNER_PRIVATE_KEY =
   process.env.OWNER_PRIVATE_KEY || '0000000000000000000000000000000000000000000000000000000000000000';
 
 const defaultNetwork = 'hardhat';
-const BLOCK_NUMBER = process.env.BLOCK_NUMBER || 14726600;
+const BLOCK_NUMBER = process.env.BLOCK_NUMBER || 14742310;
 
 const CHAIN_IDS = {
   hardhat: 31337,
