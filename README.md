@@ -1,4 +1,4 @@
-# Babylon Core-contracts
+# Babylon Finance On-chain SDK
 
 This repository provides all the interfaces and helper contracts needed to start building on top of [Babylon Finance](https://babylon.finance) Gardens.
 
