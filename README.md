@@ -44,6 +44,8 @@ To run them, follow these steps
 
 ![image](https://user-images.githubusercontent.com/541599/167233003-ece57ab8-b736-4d48-b832-bb689f0497f6.png)
 
+If you want to test with a live garden, you can use the Test WETH garden [0x2c4Beb32f0c80309876F028694B4633509e942D4](https://www.babylon.finance/garden/0x2c4Beb32f0c80309876F028694B4633509e942D4)
+
 
 ## Smart Contracts API
 
