@@ -1,10 +1,10 @@
 require('dotenv/config');
-
 require('@nomiclabs/hardhat-ethers');
 require('@nomiclabs/hardhat-etherscan');
 require('@nomiclabs/hardhat-waffle');
 require('hardhat-contract-sizer');
 require('hardhat-gas-reporter');
+require('hardhat-deploy');
 require('solidity-coverage');
 
 const OPTIMIZER = !(process.env.OPTIMIZER === 'false');

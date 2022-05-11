@@ -29,7 +29,7 @@ describe('Babylon core', function () {
   before(async () => {
     [, keeper, alice, bob] = await ethers.getSigners();
     controller = await ethers.getContractAt('IBabController', '0xD4a5b5fcB561dAF3aDF86F8477555B92FBa43b5F');
-    const owner = await impersonateAddress('0x97FcC2Ae862D03143b393e9fA73A32b563d57A6e');
+    owner = await impersonateAddress('0x97FcC2Ae862D03143b393e9fA73A32b563d57A6e');
     await controller.connect(owner).addKeeper(keeper.address);
   });
 
@@ -58,11 +58,12 @@ describe('Babylon core', function () {
         1, // Min number of voters
         eth(), // Decay rate of price per share
         eth(), // Base slippage for price per share
-        1,
+        1, // Can mint NFT after 1 sec of being a member
+        0 // Whether or not the garden has custom integrations enabled
       ],
       contribution,
       [true, true, true], // publicGardenStrategistsStewards
-      [0, 0, 0],
+      [0, 0, 0], // Profit splits. Use defaults
       {
         value: contribution,
       },
@@ -120,4 +121,5 @@ describe('Babylon core', function () {
   it('can withdraw from  a garden', async () => {
     await garden.connect(alice).withdraw(eth(), 0, alice.address, false, ADDRESS_ZERO);
   });
+
 });
