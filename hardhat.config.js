@@ -43,7 +43,7 @@ module.exports = {
       chainId: CHAIN_IDS.hardhat,
       blockGasLimit: 0x1fffffffffffff,
       allowUnlimitedContractSize: true,
-      saveDeployments: true,
+      saveDeployments: false,
       gas: 15e6,
       initialBaseFeePerGas: 0,
       forking: {
