@@ -50,7 +50,7 @@ describe('Babylon integrations', function () {
         eth(), // Decay rate of price per share
         eth(), // Base slippage for price per share
         1, // Can mint NFT after 1 sec of being a member
-        0 // Whether or not the garden has custom integrations enabled
+        1 // Whether or not the garden has custom integrations enabled
       ],
       contribution,
       [true, true, true], // publicGardenStrategistsStewards
