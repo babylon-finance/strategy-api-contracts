@@ -1,10 +1,10 @@
 require('dotenv/config');
-
 require('@nomiclabs/hardhat-ethers');
 require('@nomiclabs/hardhat-etherscan');
 require('@nomiclabs/hardhat-waffle');
 require('hardhat-contract-sizer');
 require('hardhat-gas-reporter');
+require('hardhat-deploy');
 require('solidity-coverage');
 
 const OPTIMIZER = !(process.env.OPTIMIZER === 'false');
@@ -43,7 +43,7 @@ module.exports = {
       chainId: CHAIN_IDS.hardhat,
       blockGasLimit: 0x1fffffffffffff,
       allowUnlimitedContractSize: true,
-      saveDeployments: true,
+      saveDeployments: false,
       gas: 15e6,
       initialBaseFeePerGas: 0,
       forking: {
