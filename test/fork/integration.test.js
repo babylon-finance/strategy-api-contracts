@@ -102,7 +102,12 @@ describe('Babylon integrations', function () {
     );
 
     const strategies = await garden.getStrategies();
-    customStrategy = await ethers.getContractAt('IStrategy', strategies[1]);
+    customStrategy = await ethers.getContractAt('IStrategy', strategies[0]);
+
+    await garden.connect(alice).deposit(eth(1), 0, alice.address, ADDRESS_ZERO, {
+      value: eth(1),
+    });
+    const balance = await garden.balanceOf(alice.getAddress());
 
     // Vote Strategy
     await customStrategy.connect(keeper).resolveVoting([alice.address], [balance], 0);
