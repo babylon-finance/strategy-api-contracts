@@ -128,8 +128,6 @@ describe('Babylon integrations', function () {
       args: [controller.address, '0x61c733fE0Eb89b75440A21cD658C4011ec512EB8'],
     });
 
-    const curvePoolIntegrationAddress = getBabylonContractByName('CurvePoolIntegration');
-
     const integrations = [
       'MasterSwapper',
       'BalancerIntegration',
@@ -151,9 +149,8 @@ describe('Babylon integrations', function () {
       'SushiswapPoolIntegration',
       'YearnVaultIntegration',
     ];
-    integrations.forEach((integration) => {
-      console.log(integration, getBabylonContractByName(integration));
-    });
+
+    const curvePoolIntegrationAddress = getBabylonContractByName('CurvePoolIntegration');
 
 
     const crvPool3crypto = '0xD51a44d3FaE010294C616388b506AcdA1bfAAE46';
