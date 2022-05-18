@@ -79,10 +79,9 @@ describe('Babylon integrations', function () {
       from: alice.address,
       args: [controller.address, '0x61c733fE0Eb89b75440A21cD658C4011ec512EB8'],
     });
-    console.log('customIntegration', customIntegration);
 
     await garden.connect(alice).addStrategy(
-      'Execute my custom integration',
+      'Yearn USDT Vault',
       '💎',
       [
         eth(10), // maxCapitalRequested: eth(10),
@@ -98,6 +97,58 @@ describe('Babylon integrations', function () {
       new ethers.utils.AbiCoder().encode(
         ['address', 'uint256'],
         ['0x7Da96a3891Add058AdA2E826306D812C638D87a7', 0] // integration params. We pass USDT vault
+      ), // _opEncodedDatas
+    );
+
+    const strategies = await garden.getStrategies();
+    customStrategy = await ethers.getContractAt('IStrategy', strategies[0]);
+
+    await garden.connect(alice).deposit(eth(1), 0, alice.address, ADDRESS_ZERO, {
+      value: eth(1),
+    });
+    const balance = await garden.balanceOf(alice.getAddress());
+
+    // Vote Strategy
+    await customStrategy.connect(keeper).resolveVoting([alice.address], [balance], 0);
+
+    // Execute strategy
+    await increaseTime(ONE_DAY_IN_SECONDS);
+    await customStrategy.connect(keeper).executeStrategy(eth(1), 0);
+
+    // Finalize strategy
+    await increaseTime(ONE_DAY_IN_SECONDS * 30);
+    await customStrategy.connect(keeper).finalizeStrategy(0, '', 0);
+  });
+
+  it.skip('can deploy a strategy with a CRV + Yearn Custom integration. 3pool', async () => {
+
+    // We deploy the custom yearn integration. Change with your own integration when ready
+    const customIntegration = await deploy('CustomIntegrationYearn', {
+      from: alice.address,
+      args: [controller.address, '0x61c733fE0Eb89b75440A21cD658C4011ec512EB8'],
+    });
+
+    const curvePoolIntegration = '0x0a2737320D5b5515860a21CC15904C55352d4438';
+
+    const crvPool3crypto = '0xD51a44d3FaE010294C616388b506AcdA1bfAAE46';
+    const yearnvault3crypto = '0xE537B5cc158EB71037D4125BDD7538421981E6AA';
+    await garden.connect(alice).addStrategy(
+      'CRV 3Pool + yearn vault',
+      '💎',
+      [
+        eth(10), // maxCapitalRequested: eth(10),
+        eth(0.1), // stake: eth(0.1),
+        ONE_DAY_IN_SECONDS * 30, // strategyDuration: ONE_DAY_IN_SECONDS * 30,
+        eth(0.05), // expectedReturn: eth(0.05),
+        eth(0.1), // maxAllocationPercentage: eth(0.1),
+        eth(0.05), // maxGasFeePercentage: eth(0.05),
+        eth(0.09), // maxTradeSlippagePercentage: eth(0.09),
+      ],
+      [1, 5], // _opTypes
+      [curvePoolIntegration, customIntegration.address], // _opIntegrations
+      new ethers.utils.AbiCoder().encode(
+        ['address', 'uint256', 'address', 'uint256'],
+        [crvPool3crypto, 0, yearnvault3crypto, 0] // integration params. We pass USDT vault
       ), // _opEncodedDatas
     );
 
