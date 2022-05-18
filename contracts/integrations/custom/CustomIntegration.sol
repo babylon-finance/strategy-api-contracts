@@ -83,7 +83,7 @@ abstract contract CustomIntegration is BaseIntegration, ReentrancyGuard, ICustom
 
         // Pre actions
         (address targetAddressP, uint256 callValueP, bytes memory methodDataP) =
-            _getPreActionCallData(_strategy, customInfo.addressParam, _resultTokensOut, 1);
+            _getPreActionCallData(_strategy, customInfo.addressParam, _resultTokensOut, 0);
         if (targetAddressP != address(0)) {
             // Approve spending of the pre action token
             (address approvalAsset, address spenderPre) = _preActionNeedsApproval(customInfo.addressParam, 0);
