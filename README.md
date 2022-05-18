@@ -32,7 +32,7 @@ These layers of abstraction provide a high-level of isolation and composability.
 
 You have all the information in our [Litepaper](https://docs.babylon.finance/litepaper).
 
-Babylon Finance uses hardhat chain for testing and local development. Babylon Finance integrates with +15 DeFi protocols and therefore creating a full working deployment on testnests like Kovan or Ropsten is almost impossible. Hardhat lets you clone Ethereum Mainnet and use the contracts on the same addresses. That way you can build on top of mainnet with all the DeFi protocols with Ease.
+Babylon Finance uses [Hardhat](https://hardhat.org/) chain for testing and local development. Babylon Finance integrates with +15 DeFi protocols and therefore creating a full working deployment on testnests like Kovan or Ropsten is almost impossible. Hardhat lets you clone Ethereum Mainnet and use the contracts on the same addresses. That way you can build on top of mainnet with all the DeFi protocols with Ease.
 
 ## Prerequisites
 
