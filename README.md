@@ -52,7 +52,7 @@ You can see all the functions of our main contracts, their functions and paramat
 
 ## Deployed contracts
 
-You can see all the deployed [open-sourced contracts here](https://docs.babylon.finance/deployments).
+You can see all the deployed [open-sourced contracts here](https://docs.babylon.finance/developers/deployments).
 
 ## Tests and Samples
 
