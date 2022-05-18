@@ -32,6 +32,29 @@ These layers of abstraction provide a high-level of isolation and composability.
 
 You have all the information in our [Litepaper](https://docs.babylon.finance/litepaper).
 
+Babylon Finance uses hardhat chain for testing and local development. Babylon Finance integrates with +15 DeFi protocols and therefore creating a full working deployment on testnests like Kovan or Ropsten is almost impossible. Hardhat lets you clone Ethereum Mainnet and use the contracts on the same addresses. That way you can build on top of mainnet with all the DeFi protocols with Ease.
+
+## Prerequisites
+
+You need to have node and yarn installed in your machine.
+
+[NodeJS](https://nodejs.org/en/download/)
+[Yarn](https://yarnpkg.com/)
+
+## Tests and Samples
+
+You can find a test with sample code to create gardens and strategies in the `test` folder. 
+
+To run them, follow these steps
+
+1. Install dependencies with yarn ```yarn```
+2. Set `ALCHEMY_KEY` as an environment variable. You can grab a free key from [Alchemy](https://www.alchemy.com/).
+3. Execute the following command ```yarn run test```
+
+![image](https://user-images.githubusercontent.com/541599/167233003-ece57ab8-b736-4d48-b832-bb689f0497f6.png)
+
+If you want to test with a live garden, you can use the Test WETH garden [0x2c4Beb32f0c80309876F028694B4633509e942D4](https://www.babylon.finance/garden/0x2c4Beb32f0c80309876F028694B4633509e942D4)
+
 ## Custom Integrations
 
 Integrations are adapters that Babylon uses to connect with other DeFi & Web3 protocols. 
@@ -53,17 +76,3 @@ You can see all the functions of our main contracts, their functions and paramat
 ## Deployed contracts
 
 You can see all the deployed [open-sourced contracts here](https://docs.babylon.finance/developers/deployments).
-
-## Tests and Samples
-
-You can find a test with sample code to create gardens and strategies in the `test` folder. 
-
-To run them, follow these steps
-
-1. Install dependencies with yarn ```yarn```
-2. Set `ALCHEMY_KEY` as an environment variable. You can grab a free key from [Alchemy](https://www.alchemy.com/).
-3. Execute the following command ```yarn run test```
-
-![image](https://user-images.githubusercontent.com/541599/167233003-ece57ab8-b736-4d48-b832-bb689f0497f6.png)
-
-If you want to test with a live garden, you can use the Test WETH garden [0x2c4Beb32f0c80309876F028694B4633509e942D4](https://www.babylon.finance/garden/0x2c4Beb32f0c80309876F028694B4633509e942D4)
