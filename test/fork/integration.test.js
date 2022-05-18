@@ -4,7 +4,7 @@ const addresses = require('../../lib/addresses');
 const { getERC20, increaseTime } = require('../utils/test-helpers');
 const { ADDRESS_ZERO, ONE_DAY_IN_SECONDS } = require('../../lib/constants');
 const { impersonateAddress } = require('../../lib/rpc');
-const { eth } = require('../../lib/helpers');
+const { eth, getBabylonContractByName } = require('../../lib/helpers');
 const { deployments } = require('hardhat');
 const { deploy } = deployments;
 // const { takeSnapshot, restoreSnapshot } = require('lib/rpc');
@@ -120,7 +120,7 @@ describe('Babylon integrations', function () {
     await customStrategy.connect(keeper).finalizeStrategy(0, '', 0);
   });
 
-  it.skip('can deploy a strategy with a CRV + Yearn Custom integration. 3pool', async () => {
+  it('can deploy a strategy with a CRV + Yearn Custom integration. 3pool', async () => {
 
     // We deploy the custom yearn integration. Change with your own integration when ready
     const customIntegration = await deploy('CustomIntegrationYearn', {
@@ -128,7 +128,33 @@ describe('Babylon integrations', function () {
       args: [controller.address, '0x61c733fE0Eb89b75440A21cD658C4011ec512EB8'],
     });
 
-    const curvePoolIntegration = '0x0a2737320D5b5515860a21CC15904C55352d4438';
+    const curvePoolIntegrationAddress = getBabylonContractByName('CurvePoolIntegration');
+
+    const integrations = [
+      'MasterSwapper',
+      'BalancerIntegration',
+      'LidoStakeIntegration',
+      'CurvePoolIntegration',
+      'CurveGaugeIntegration',
+      'ConvexStakeIntegration',
+      'UniswapV3TradeIntegration',
+      'CompoundLendIntegration',
+      'CompoundBorrowIntegration',
+      'FuseLendIntegration',
+      'FuseBorrowIntegration',
+      'AaveLendIntegration',
+      'AaveBorrowIntegration',
+      'UniswapPoolIntegration',
+      'PickleJarIntegration',
+      'PickleFarmIntegration',
+      'StakewiseIntegration',
+      'SushiswapPoolIntegration',
+      'YearnVaultIntegration',
+    ];
+    integrations.forEach((integration) => {
+      console.log(integration, getBabylonContractByName(integration));
+    });
+
 
     const crvPool3crypto = '0xD51a44d3FaE010294C616388b506AcdA1bfAAE46';
     const yearnvault3crypto = '0xE537B5cc158EB71037D4125BDD7538421981E6AA';
@@ -145,10 +171,10 @@ describe('Babylon integrations', function () {
         eth(0.09), // maxTradeSlippagePercentage: eth(0.09),
       ],
       [1, 5], // _opTypes
-      [curvePoolIntegration, customIntegration.address], // _opIntegrations
+      [curvePoolIntegrationAddress, customIntegration.address], // _opIntegrations
       new ethers.utils.AbiCoder().encode(
         ['address', 'uint256', 'address', 'uint256'],
-        [crvPool3crypto, 0, yearnvault3crypto, 0] // integration params. We pass USDT vault
+        [crvPool3crypto, 0, yearnvault3crypto, 0] // integration params. We pass 3crypto pool + yearn vault
       ), // _opEncodedDatas
     );
 
