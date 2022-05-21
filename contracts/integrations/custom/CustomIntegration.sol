@@ -88,7 +88,7 @@ abstract contract CustomIntegration is BaseIntegration, ReentrancyGuard, ICustom
             // Approve spending of the pre action token
             (address approvalAsset, address spenderPre) = _preActionNeedsApproval(customInfo.addressParam, 0);
             if (approvalAsset != address(0)) {
-                customInfo.strategy.invokeApprove(spenderPre, approvalAsset, 2 ** (256 - 1));
+                customInfo.strategy.invokeApprove(spenderPre, approvalAsset, 2**(256 - 1));
             }
             // Invoke protocol specific call
             customInfo.strategy.invokeFromIntegration(targetAddressP, callValueP, methodDataP);
@@ -122,7 +122,7 @@ abstract contract CustomIntegration is BaseIntegration, ReentrancyGuard, ICustom
             // Approve spending of the post action token
             (address approvalAsset, address spenderPost) = _postActionNeedsApproval(customInfo.addressParam, 0);
             if (approvalAsset != address(0)) {
-                customInfo.strategy.invokeApprove(spenderPost, approvalAsset, 2 ** (256 - 1));
+                customInfo.strategy.invokeApprove(spenderPost, approvalAsset, 2**(256 - 1));
             }
             // Invoke protocol specific call
             customInfo.strategy.invokeFromIntegration(targetAddressP, callValueP, methodDataP);
@@ -231,7 +231,7 @@ abstract contract CustomIntegration is BaseIntegration, ReentrancyGuard, ICustom
         bytes calldata /* _data */
     ) external view virtual override returns (address[] memory, uint256[] memory);
 
-    function getOutputTokensAndMinAmountOut(bytes calldata _data, uint256 _liquidity)
+    function getOutputTokensAndMinAmountOut(address _strategy, bytes calldata _data, uint256 _liquidity)
         external
         view
         virtual

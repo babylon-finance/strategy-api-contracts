@@ -177,12 +177,14 @@ contract CustomIntegrationTemplate is CustomIntegration {
     /**
      * The tokens to be received on exit.
      *
+     * hparam  _strategy                  Strategy address
      * hparam  _data                      Bytes data
      * hparam  _liquidity                 Number with the amount of result tokens to exit
      * @return exitTokens                 List of output tokens to receive on exit
      * @return _minAmountsOut             List of min amounts for the output tokens to receive
      */
     function getOutputTokensAndMinAmountOut(
+        address, /* _strategy */
         bytes calldata, /* _data */
         uint256 /* _liquidity */
     ) external pure override returns (address[] memory exitTokens, uint256[] memory _minAmountsOut) {
@@ -224,7 +226,7 @@ contract CustomIntegrationTemplate is CustomIntegration {
         uint256 /* _customOp */
     )
         internal
-        view
+        pure
         override
         returns (
             address,
@@ -254,7 +256,7 @@ contract CustomIntegrationTemplate is CustomIntegration {
         uint256 /* _customOp */
     )
         internal
-        view
+        pure
         override
         returns (
             address,
@@ -277,7 +279,7 @@ contract CustomIntegrationTemplate is CustomIntegration {
     function _preActionNeedsApproval(
         address, /* _asset */
         uint8 /* _customOp */
-    ) internal view override returns (address, address) {
+    ) internal pure override returns (address, address) {
         return (address(0), address(0));
     }
 
@@ -293,7 +295,7 @@ contract CustomIntegrationTemplate is CustomIntegration {
     function _postActionNeedsApproval(
         address, /* _asset */
         uint8 /* _customOp */
-    ) internal view override returns (address, address) {
+    ) internal pure override returns (address, address) {
         return (address(0), address(0));
     }
 }
