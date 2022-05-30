@@ -15,6 +15,7 @@ import {LowGasSafeMath} from '../../lib/LowGasSafeMath.sol';
 import {BytesLib} from '../../lib/BytesLib.sol';
 import {ControllerLib} from '../../lib/ControllerLib.sol';
 import {PoolBalances} from '@balancer-labs/v2-vault/contracts/PoolBalances.sol';
+import {BalancerHelpers} from '@balancer-labs/v2-standalone-utils/contracts/BalancerHelpers.sol';
 
 /**
  * @title Interface to supply the getVault function missing in IBasePool
@@ -40,6 +41,7 @@ contract CustomIntegrationBalancerv2 is CustomIntegration {
     /* ============ State Variables ============ */
 
     address private constant vaultAddress = 0xBA12222222228d8Ba445958a75a0704d566BF2C8;
+    address private constant helpers = 0x5aDDCCa35b7A0D07C74063c48700C8590E87864E;
 
     /* ============ Constructor ============ */
 
@@ -178,8 +180,11 @@ contract CustomIntegrationBalancerv2 is CustomIntegration {
 
         (IERC20[] memory tokens, , ) = IVault(vaultAddress).getPoolTokens(poolId);
         require(_tokensOut.length == tokens.length, 'Must supply same number of tokens as are already in the pool!');
+        for (uint256 i = 0; i < _tokensOut.length; ++i) {
+            require(_tokensOut[i] == address(tokens[i]), 'Tokens not supplied in pool order!');
+        }
 
-        IVault.ExitPoolRequest memory exitRequest = _getExitRequest(_tokensOut, tokens, _minAmountsOut, resultTokensIn);
+        IVault.ExitPoolRequest memory exitRequest = _getExitRequest(tokens, _minAmountsOut, resultTokensIn);
         bytes memory methodData = abi.encodeWithSelector(
             IVault.exitPool.selector,
             poolId,
@@ -252,27 +257,26 @@ contract CustomIntegrationBalancerv2 is CustomIntegration {
     function getOutputTokensAndMinAmountOut(
         address _strategy,
         bytes calldata _data,
-        uint256 /* _liquidity */
+        uint256 _liquidity
     ) external view override returns (address[] memory exitTokens, uint256[] memory _minAmountsOut) {
         IBasePool pool = IBasePool(BytesLib.decodeOpDataAddressAssembly(_data, 12));
         IVault vault = IVault(vaultAddress);
         bytes32 poolId = pool.getPoolId();
 
-        (IERC20[] memory tokens, uint256[] memory balances, ) = vault.getPoolTokens(poolId);
+        (IERC20[] memory tokens, , ) = vault.getPoolTokens(poolId);
 
-        uint256 tokenBalanceTotal;
-        _minAmountsOut = new uint256[](tokens.length);
+        uint256[] memory minOut = new uint256[](tokens.length);
+
+        IVault.ExitPoolRequest memory exitRequest = _getExitRequest(tokens, minOut, _liquidity);
+
+        (, uint256[] memory amountsOut) = BalancerHelpers(helpers).queryExit(poolId, _strategy, _strategy, exitRequest);
+
         exitTokens = new address[](tokens.length);
-
-        for (uint8 i = 0; i < tokens.length; ++i) {
-            tokenBalanceTotal += _getBalanceFullDecimals(balances[i], tokens[i]);
-        }
-        for (uint8 i = 0; i < tokens.length; ++i) {
+        for (uint256 i = 0; i < tokens.length; ++i) {
             exitTokens[i] = address(tokens[i]);
-            _minAmountsOut[i] = 0;
         }
 
-        return (exitTokens, _minAmountsOut);
+        return (exitTokens, amountsOut);
     }
 
     /**
@@ -326,16 +330,14 @@ contract CustomIntegrationBalancerv2 is CustomIntegration {
     }
 
     function _getExitRequest(
-        address[] calldata _tokensIn,
         IERC20[] memory _poolTokens,
-        uint256[] calldata _minAmountsOut,
+        uint256[] memory _minAmountsOut,
         uint256 _resultTokensIn
     ) private pure returns (IVault.ExitPoolRequest memory exitRequest) {
-        exitRequest.minAmountsOut = new uint256[](_tokensIn.length);
+        exitRequest.minAmountsOut = new uint256[](_poolTokens.length);
         exitRequest.assets = new IAsset[](_poolTokens.length);
 
         for (uint8 i = 0; i < _poolTokens.length; ++i) {
-            require(_tokensIn[i] == address(_poolTokens[i]), 'Tokens not supplied in pool order!');
             exitRequest.assets[i] = IAsset(address(_poolTokens[i]));
             exitRequest.minAmountsOut[i] = _minAmountsOut[i];
         }
