@@ -17,6 +17,8 @@ import {ControllerLib} from '../../lib/ControllerLib.sol';
 import {PoolBalances} from '@balancer-labs/v2-vault/contracts/PoolBalances.sol';
 import {BalancerHelpers} from '@balancer-labs/v2-standalone-utils/contracts/BalancerHelpers.sol';
 
+import {WeightedMath} from '@balancer-labs/v2-vault-weighted/contracts/WeightedMath.sol';
+
 /**
  * @title Interface to supply the getVault function missing in IBasePool
  */
