@@ -15,9 +15,10 @@ import {LowGasSafeMath} from '../../lib/LowGasSafeMath.sol';
 import {BytesLib} from '../../lib/BytesLib.sol';
 import {ControllerLib} from '../../lib/ControllerLib.sol';
 import {PoolBalances} from '@balancer-labs/v2-vault/contracts/PoolBalances.sol';
-import {BalancerHelpers} from '@balancer-labs/v2-standalone-utils/contracts/BalancerHelpers.sol';
 
 import {WeightedMath} from '@balancer-labs/v2-pool-weighted/contracts/WeightedMath.sol';
+
+import 'hardhat/console.sol';
 
 /**
  * @title Interface to supply the getVault function missing in IBasePool
@@ -40,10 +41,10 @@ interface IERC20Decimals {
  * This integration allows Babylon Finance gardens to provide liquidity to Balancer V2 pools.
  */
 contract CustomIntegrationBalancerv2 is CustomIntegration {
+    using WeightedMath for *;
     /* ============ State Variables ============ */
 
     address private constant vaultAddress = 0xBA12222222228d8Ba445958a75a0704d566BF2C8;
-    address private constant helpers = 0x5aDDCCa35b7A0D07C74063c48700C8590E87864E;
 
     /* ============ Constructor ============ */
 
@@ -96,7 +97,7 @@ contract CustomIntegrationBalancerv2 is CustomIntegration {
 
     /**
      * Creates function call data to provide liquidity to a Balancer pool.
-     *j
+     *
      * @param  _strategy                 Address of the strategy
      * @param  _data                     OpData e.g. Address of the pool
      * @param  _resultTokensOut          Amount of result tokens to send
@@ -182,11 +183,8 @@ contract CustomIntegrationBalancerv2 is CustomIntegration {
 
         (IERC20[] memory tokens, , ) = IVault(vaultAddress).getPoolTokens(poolId);
         require(_tokensOut.length == tokens.length, 'Must supply same number of tokens as are already in the pool!');
-        for (uint256 i = 0; i < _tokensOut.length; ++i) {
-            require(_tokensOut[i] == address(tokens[i]), 'Tokens not supplied in pool order!');
-        }
 
-        IVault.ExitPoolRequest memory exitRequest = _getExitRequest(tokens, _minAmountsOut, resultTokensIn);
+        IVault.ExitPoolRequest memory exitRequest = _getExitRequest(_tokensOut, tokens, _minAmountsOut, resultTokensIn);
         bytes memory methodData = abi.encodeWithSelector(
             IVault.exitPool.selector,
             poolId,
@@ -239,10 +237,12 @@ contract CustomIntegrationBalancerv2 is CustomIntegration {
 
         for (uint8 i = 0; i < poolTokens.length; ++i) {
             tokenBalanceTotal += _getBalanceFullDecimals(balances[i], poolTokens[i]);
+            console.log(tokenBalanceTotal);
         }
         for (uint8 i = 0; i < poolTokens.length; ++i) {
             _inputTokens[i] = address(poolTokens[i]);
             _inputWeights[i] = (_getBalanceFullDecimals(balances[i], poolTokens[i]) * (10**18)) / tokenBalanceTotal;
+            console.log(_inputTokens[i], _inputWeights[i]);
         }
 
         return (_inputTokens, _inputWeights);
@@ -270,7 +270,7 @@ contract CustomIntegrationBalancerv2 is CustomIntegration {
 
         // (, uint256[] memory amountsOut) = BalancerHelpers(helpers).queryExit(poolId, _strategy, _strategy, exitRequest);
 
-        uint256[] memory amountsOut = WeightedMath._calcTokensOutGivenExactBptIn(
+        uint256[] memory amountsOut = _calcTokensOutGivenExactBptIn(
             balances,
             bpt.balanceOf(_strategy),
             bpt.totalSupply()
@@ -335,14 +335,16 @@ contract CustomIntegrationBalancerv2 is CustomIntegration {
     }
 
     function _getExitRequest(
+        address[] calldata _tokensIn,
         IERC20[] memory _poolTokens,
-        uint256[] memory _minAmountsOut,
+        uint256[] calldata _minAmountsOut,
         uint256 _resultTokensIn
     ) private pure returns (IVault.ExitPoolRequest memory exitRequest) {
-        exitRequest.minAmountsOut = new uint256[](_poolTokens.length);
+        exitRequest.minAmountsOut = new uint256[](_tokensIn.length);
         exitRequest.assets = new IAsset[](_poolTokens.length);
 
         for (uint8 i = 0; i < _poolTokens.length; ++i) {
+            require(_tokensIn[i] == address(_poolTokens[i]), 'Tokens not supplied in pool order!');
             exitRequest.assets[i] = IAsset(address(_poolTokens[i]));
             exitRequest.minAmountsOut[i] = _minAmountsOut[i];
         }
