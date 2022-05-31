@@ -17,7 +17,7 @@ import {ControllerLib} from '../../lib/ControllerLib.sol';
 import {PoolBalances} from '@balancer-labs/v2-vault/contracts/PoolBalances.sol';
 import {BalancerHelpers} from '@balancer-labs/v2-standalone-utils/contracts/BalancerHelpers.sol';
 
-import {WeightedMath} from '@balancer-labs/v2-vault-weighted/contracts/WeightedMath.sol';
+import {WeightedMath} from '@balancer-labs/v2-pool-weighted/contracts/WeightedMath.sol';
 
 /**
  * @title Interface to supply the getVault function missing in IBasePool
@@ -96,7 +96,7 @@ contract CustomIntegrationBalancerv2 is CustomIntegration {
 
     /**
      * Creates function call data to provide liquidity to a Balancer pool.
-     *
+     *j
      * @param  _strategy                 Address of the strategy
      * @param  _data                     OpData e.g. Address of the pool
      * @param  _resultTokensOut          Amount of result tokens to send
@@ -264,19 +264,22 @@ contract CustomIntegrationBalancerv2 is CustomIntegration {
         IBasePool pool = IBasePool(BytesLib.decodeOpDataAddressAssembly(_data, 12));
         IVault vault = IVault(vaultAddress);
         bytes32 poolId = pool.getPoolId();
+        IERC20 bpt = IERC20(BytesLib.decodeOpDataAddressAssembly(_data, 12));
 
-        (IERC20[] memory tokens, , ) = vault.getPoolTokens(poolId);
+        (, uint256[] memory balances, ) = vault.getPoolTokens(poolId);
 
-        uint256[] memory minOut = new uint256[](tokens.length);
+        // (, uint256[] memory amountsOut) = BalancerHelpers(helpers).queryExit(poolId, _strategy, _strategy, exitRequest);
 
-        IVault.ExitPoolRequest memory exitRequest = _getExitRequest(tokens, minOut, _liquidity);
+        uint256[] memory amountsOut = WeightedMath._calcTokensOutGivenExactBptIn(
+            balances,
+            bpt.balanceOf(_strategy),
+            bpt.totalSupply()
+        );
 
-        (, uint256[] memory amountsOut) = BalancerHelpers(helpers).queryExit(poolId, _strategy, _strategy, exitRequest);
-
-        exitTokens = new address[](tokens.length);
-        for (uint256 i = 0; i < tokens.length; ++i) {
-            exitTokens[i] = address(tokens[i]);
-        }
+        // exitTokens = new address[](tokens.length);
+        // for (uint256 i = 0; i < tokens.length; ++i) {
+        //     exitTokens[i] = address(tokens[i]);
+        // }
 
         return (exitTokens, amountsOut);
     }
