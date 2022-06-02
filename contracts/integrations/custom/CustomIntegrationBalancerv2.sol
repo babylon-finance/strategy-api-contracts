@@ -16,7 +16,7 @@ import {BytesLib} from '../../lib/BytesLib.sol';
 import {ControllerLib} from '../../lib/ControllerLib.sol';
 import {PoolBalances} from '@balancer-labs/v2-vault/contracts/PoolBalances.sol';
 
-import {WeightedMath} from '@balancer-labs/v2-pool-weighted/contracts/WeightedMath.sol';
+import {WeightedMath} from './WeightedMath.sol';
 
 import 'hardhat/console.sol';
 
@@ -41,7 +41,6 @@ interface IERC20Decimals {
  * This integration allows Babylon Finance gardens to provide liquidity to Balancer V2 pools.
  */
 contract CustomIntegrationBalancerv2 is CustomIntegration {
-    using WeightedMath for *;
     /* ============ State Variables ============ */
 
     address private constant vaultAddress = 0xBA12222222228d8Ba445958a75a0704d566BF2C8;
@@ -96,13 +95,13 @@ contract CustomIntegrationBalancerv2 is CustomIntegration {
     }
 
     /**
-     * Creates function call data to provide liquidity to a Balancer pool.
+     * Return enter custom calldata
      *
-     * @param  _strategy                 Address of the strategy
-     * @param  _data                     OpData e.g. Address of the pool
-     * @param  _resultTokensOut          Amount of result tokens to send
-     * @param  _tokensIn                 Addresses of tokens to send to spender to enter
-     * @param  _maxAmountsIn             Amounts of tokens to send to spender
+     * hparam  _strategy                 Address of the strategy
+     * hparam  _data                     OpData e.g. Address of the pool
+     * hparam  _resultTokensOut          Amount of result tokens to send
+     * hparam  _tokensIn                 Addresses of tokens to send to spender to enter
+     * hparam  _maxAmountsIn             Amounts of tokens to send to spender
      *
      * @return address                   Target contract address
      * @return uint256                   Call value
@@ -266,20 +265,20 @@ contract CustomIntegrationBalancerv2 is CustomIntegration {
         bytes32 poolId = pool.getPoolId();
         IERC20 bpt = IERC20(BytesLib.decodeOpDataAddressAssembly(_data, 12));
 
-        (, uint256[] memory balances, ) = vault.getPoolTokens(poolId);
+        (IERC20[] memory tokens, uint256[] memory balances, ) = vault.getPoolTokens(poolId);
 
         // (, uint256[] memory amountsOut) = BalancerHelpers(helpers).queryExit(poolId, _strategy, _strategy, exitRequest);
 
-        uint256[] memory amountsOut = _calcTokensOutGivenExactBptIn(
+        uint256[] memory amountsOut = WeightedMath._calcTokensOutGivenExactBptIn(
             balances,
-            bpt.balanceOf(_strategy),
+            _liquidity,
             bpt.totalSupply()
         );
 
-        // exitTokens = new address[](tokens.length);
-        // for (uint256 i = 0; i < tokens.length; ++i) {
-        //     exitTokens[i] = address(tokens[i]);
-        // }
+        exitTokens = new address[](tokens.length);
+        for (uint256 i = 0; i < tokens.length; ++i) {
+            exitTokens[i] = address(tokens[i]);
+        }
 
         return (exitTokens, amountsOut);
     }
@@ -291,11 +290,15 @@ contract CustomIntegrationBalancerv2 is CustomIntegration {
      * hparam  _tokenDenominator          Token we receive the capital in
      * @return uint256                    Amount of result tokens to receive
      */
-    function getPriceResultToken(
-        bytes calldata, /* _data */
-        address /* _tokenDenominator */
-    ) external pure override returns (uint256) {
-        return 0;
+    function getPriceResultToken(bytes calldata _data, address _tokenDenominator)
+        external
+        view
+        override
+        returns (uint256)
+    {
+        (address[] memory _inputTokens, uint256[] memory _inputWeights) = getInputTokensAndWeights(_data);
+        // address pool = BytesLib.decodeOpDataAddress(_data);
+        // return _getPrice(pool, _tokenDenominator);
     }
 
     /* ============ Private Functions ============ */
