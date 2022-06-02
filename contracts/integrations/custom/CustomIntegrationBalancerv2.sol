@@ -6,6 +6,7 @@ pragma experimental ABIEncoderV2;
 import {IAsset} from '@balancer-labs/v2-vault/contracts/interfaces/IAsset.sol';
 import {IBasePool} from '@balancer-labs/v2-vault/contracts/interfaces/IBasePool.sol';
 import {IERC20} from '@balancer-labs/v2-solidity-utils/contracts/openzeppelin/IERC20.sol';
+import {ERC20} from '@balancer-labs/v2-solidity-utils/contracts/openzeppelin/ERC20.sol';
 import {IVault} from '@balancer-labs/v2-vault/contracts/interfaces/IVault.sol';
 
 import {IBabController} from '../../interfaces/IBabController.sol';
@@ -28,22 +29,20 @@ interface IMinimalPool {
 }
 
 /**
- * @title Interface to get the decimals for an ERC-20 token
- */
-interface IERC20Decimals {
-    function decimals() external view returns (uint8);
-}
-
-/**
  * @title Custom integration for the Balancer V2 protocol
  * @author ChrisiPK, MartelAxe
  *
  * This integration allows Babylon Finance gardens to provide liquidity to Balancer V2 pools.
  */
 contract CustomIntegrationBalancerv2 is CustomIntegration {
+    using LowGasSafeMath for uint256;
+
     /* ============ State Variables ============ */
 
     address private constant vaultAddress = 0xBA12222222228d8Ba445958a75a0704d566BF2C8;
+
+    // Allowable slippage for the price of pool tokens in percent.
+    uint8 private constant priceSlippage = 5;
 
     /* ============ Constructor ============ */
 
@@ -236,12 +235,10 @@ contract CustomIntegrationBalancerv2 is CustomIntegration {
 
         for (uint8 i = 0; i < poolTokens.length; ++i) {
             tokenBalanceTotal += _getBalanceFullDecimals(balances[i], poolTokens[i]);
-            console.log(tokenBalanceTotal);
         }
         for (uint8 i = 0; i < poolTokens.length; ++i) {
             _inputTokens[i] = address(poolTokens[i]);
             _inputWeights[i] = (_getBalanceFullDecimals(balances[i], poolTokens[i]) * (10**18)) / tokenBalanceTotal;
-            console.log(_inputTokens[i], _inputWeights[i]);
         }
 
         return (_inputTokens, _inputWeights);
@@ -256,7 +253,7 @@ contract CustomIntegrationBalancerv2 is CustomIntegration {
      * @return _minAmountsOut             List of min amounts for the output tokens to receive
      */
     function getOutputTokensAndMinAmountOut(
-        address _strategy,
+        address, /* _strategy */
         bytes calldata _data,
         uint256 _liquidity
     ) external view override returns (address[] memory exitTokens, uint256[] memory _minAmountsOut) {
@@ -266,8 +263,6 @@ contract CustomIntegrationBalancerv2 is CustomIntegration {
         IERC20 bpt = IERC20(BytesLib.decodeOpDataAddressAssembly(_data, 12));
 
         (IERC20[] memory tokens, uint256[] memory balances, ) = vault.getPoolTokens(poolId);
-
-        // (, uint256[] memory amountsOut) = BalancerHelpers(helpers).queryExit(poolId, _strategy, _strategy, exitRequest);
 
         uint256[] memory amountsOut = WeightedMath._calcTokensOutGivenExactBptIn(
             balances,
@@ -296,21 +291,46 @@ contract CustomIntegrationBalancerv2 is CustomIntegration {
         override
         returns (uint256)
     {
-        (address[] memory _inputTokens, uint256[] memory _inputWeights) = getInputTokensAndWeights(_data);
-        // address pool = BytesLib.decodeOpDataAddress(_data);
-        // return _getPrice(pool, _tokenDenominator);
+        IBasePool pool = IBasePool(BytesLib.decodeOpDataAddressAssembly(_data, 12));
+        IVault vault = IVault(vaultAddress);
+        bytes32 poolId = pool.getPoolId();
+
+        (IERC20[] memory poolTokens, uint256[] memory balances, ) = vault.getPoolTokens(poolId);
+
+        uint256 sumTokensInDenominator;
+        for (uint256 i = 0; i < poolTokens.length; ++i) {
+            uint256 tokenInDenominator = balances[i]
+                .mul(_getPrice(address(poolTokens[i]), _tokenDenominator))
+                .div(10 ** ERC20(address(poolTokens[i])).decimals());
+            sumTokensInDenominator = sumTokensInDenominator.add(tokenInDenominator);
+        }
+
+        ERC20 balToken = ERC20(address(pool));
+        ERC20 denomToken = ERC20(_tokenDenominator);
+
+        // We need to make sure that tokens with different decimals work fine with each other.
+        // What we get from the calculation is 
+        // (balToken * balDecimals) / (denomToken * denomDecimals)
+        // so we multiply with denomDecimals * (denomDecimals / balDecimals) to get
+        // balToken/denomToken  * (balDecimals / denomDecimals) * denomDecimals * (denomDecimals / balDecimals)
+        // and in the end we will have
+        // balToken/denomToken * denomDecimals
+        uint256 price = balToken.totalSupply()  // balToken * balDecimals
+            .div(sumTokensInDenominator)        // / denomTokens / denomDecimals)
+            .mul(10 ** denomToken.decimals())   // * denomDecimals
+            .mul(10 ** denomToken.decimals())   // * denomDecimals
+            .div(10 ** balToken.decimals());    // / balDecimals
+
+        // add price slippage
+        uint256 priceWithSlippage = price.mul(100 - priceSlippage).div(100);
+        return priceWithSlippage;
     }
 
     /* ============ Private Functions ============ */
 
     function _getBalanceFullDecimals(uint256 _balance, IERC20 _token) private view returns (uint256) {
-        IERC20Decimals tokenMetadata = IERC20Decimals(address(_token));
-        if (tokenMetadata.decimals() != 0) {
-            return _balance * (10**(18 - tokenMetadata.decimals()));
-        }
-
-        // no information on decimals available, assume 18
-        return _balance;
+        ERC20 tokenMetadata = ERC20(address(_token));
+        return _balance * (10**(18 - tokenMetadata.decimals()));
     }
 
     function _getJoinRequest(

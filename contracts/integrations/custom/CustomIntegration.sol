@@ -81,8 +81,7 @@ abstract contract CustomIntegration is BaseIntegration, ReentrancyGuard, ICustom
         uint256[] calldata _maxAmountsIn
     ) external override nonReentrant onlySystemContract {
         CustomInfo memory customInfo = _createCustomInfo(_strategy, _data, _resultTokensOut);
-        console.log('_resultTokensOut', _resultTokensOut);
-        // _validatePreJoinCustomData(customInfo);
+        _validatePreJoinCustomData(customInfo);
 
         // Pre actions
         (address targetAddressP, uint256 callValueP, bytes memory methodDataP) = _getPreActionCallData(
@@ -118,10 +117,6 @@ abstract contract CustomIntegration is BaseIntegration, ReentrancyGuard, ICustom
             _maxAmountsIn
         );
         customInfo.strategy.invokeFromIntegration(target, callValue, methodData);
-        console.log(
-            'TEST2',
-            IERC20(0x06Df3b2bbB68adc8B0e302443692037ED9f91b42).balanceOf(0x65E1117E6613376fBC43A6744FcD966732EF2054)
-        );
         customInfo.resultTokensInTransaction = IERC20(customInfo.resultToken)
             .balanceOf(address(customInfo.strategy))
             .sub(customInfo.resultTokensInStrategy);
