@@ -15,6 +15,9 @@ const NFT_URI = 'https://babylon.mypinata.cloud/ipfs/QmcL826qNckBzEk2P11w4GQrrQF
 const NFT_SEED = '504592746';
 const IDLE_FINANCE_PRICE_HELPER_ADDRESS = '0x04Ce60ed10F6D2CfF3AA015fc7b950D13c113be5';
 const IDLE_FINANCE_CDO_REGISTRY_ADDRESS = '0x84FDeE80F18957A041354E99C7eB407467D94d8E';
+const LIQUITY_BORROWER_OPERATIONS_ADDDRESS = '0x24179CD81c9e782A4096035f7eC97fB8B783e007';
+const LUSD_ADDRESS = '0x5f98805A4E8be255a32880FDeC7F6728C6568bA0';
+const LUSD_WHALE = '0x66017d22b0f8556afdd19fc67041899eb65a21bb';
 
 const IDLE_VAULTS = {
   bestYield: {
@@ -404,4 +407,62 @@ describe('Babylon integrations', function () {
       });
     }
   }
+
+  it('can deploy a strategy with the Liquity Integration', async () => {
+
+    const customIntegration = await deploy('CustomIntegrationLiquity', {
+      from: alice.address,
+      args: [controller.address, LIQUITY_BORROWER_OPERATIONS_ADDDRESS],
+    });
+
+    await garden.connect(alice).addStrategy(
+      'Liquity',
+      '💎',
+      [
+        eth(10), // maxCapitalRequested: eth(10),
+        eth(0.1), // stake: eth(0.1),
+        ONE_DAY_IN_SECONDS * 30, // strategyDuration: ONE_DAY_IN_SECONDS * 30,
+        eth(0.05), // expectedReturn: eth(0.05),
+        eth(0.1), // maxAllocationPercentage: eth(0.1),
+        eth(0.05), // maxGasFeePercentage: eth(0.05),
+        eth(0.09), // maxTradeSlippagePercentage: eth(0.09),
+      ],
+      [5], // _opTypes
+      [customIntegration.address], // _opIntegrations
+      new ethers.utils.AbiCoder().encode(
+        ['address', 'uint256'],
+        [ADDRESS_ZERO, eth(3000)] // integration params, 3000 LUSD borrow
+      ), // _opEncodedDatas
+    );
+
+    const strategies = await garden.getStrategies();
+    customStrategy = await ethers.getContractAt('IStrategy', strategies[0]);
+
+    await garden.connect(alice).deposit(eth(10), 0, alice.address, ADDRESS_ZERO, {
+      value: eth(10),
+    });
+    const balance = await garden.balanceOf(alice.getAddress());
+
+    // Vote Strategy
+    await customStrategy.connect(keeper).resolveVoting([alice.address], [balance], 0);
+
+    // Execute strategy
+    await increaseTime(ONE_DAY_IN_SECONDS);
+    await customStrategy.connect(keeper).executeStrategy(eth(10), 0);
+
+    // Need additional LUSD to repay debt
+    await hre.network.provider.request({
+      method: 'hardhat_impersonateAccount',
+      params: [LUSD_WHALE]
+    })
+    const lusdWhaleTransmitter = await ethers.provider.getSigner(LUSD_WHALE)
+    const lusdErc20 = await getERC20(LUSD_ADDRESS)
+
+    // transfer 15 LUSD to strategy
+    await lusdErc20.connect(lusdWhaleTransmitter).transfer(customStrategy.address, eth(15))
+
+    // Finalize strategy
+    await increaseTime(ONE_DAY_IN_SECONDS * 30);
+    await customStrategy.connect(keeper).finalizeStrategy(0, '', 0);
+  });
 });
