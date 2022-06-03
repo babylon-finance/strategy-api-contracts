@@ -77,7 +77,7 @@ describe('Balancer integration', function () {
 
   afterEach(async () => { });
 
-  it('can enter a strategy with the Balancer custom integration', async () => {
+  it('can enter a strategy with the Balancer custom integration on WETH garden', async () => {
     const poolAddressStablePool = '0x06Df3b2bbB68adc8B0e302443692037ED9f91b42';
     const balToken = await ethers.getContractAt('@balancer-labs/v2-solidity-utils/contracts/openzeppelin/IERC20.sol:IERC20', poolAddressStablePool);
 

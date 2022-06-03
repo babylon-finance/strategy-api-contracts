@@ -86,7 +86,7 @@ describe.only('Balancer integration', function () {
 
   afterEach(async () => { });
 
-  it('can enter a strategy with the Balancer custom integration', async () => {
+  it('can enter a strategy with the Balancer custom integration on USDC garden', async () => {
     const poolAddressStablePool = '0x06Df3b2bbB68adc8B0e302443692037ED9f91b42';
     const balToken = await ethers.getContractAt('@balancer-labs/v2-solidity-utils/contracts/openzeppelin/IERC20.sol:IERC20', poolAddressStablePool);
 
@@ -147,7 +147,7 @@ describe.only('Balancer integration', function () {
     await customStrategy.connect(keeper).executeStrategy(10000000000, 0);
 
     let balBalance = await balToken.balanceOf(customStrategy.address);
-    expect(balBalance).to.be.above(0);
+    expect(balBalance).to.be.above(eth(9500));
 
     // Finalize strategy
     await increaseTime(ONE_DAY_IN_SECONDS * 30);

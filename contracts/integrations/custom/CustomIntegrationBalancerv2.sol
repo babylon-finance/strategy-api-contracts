@@ -293,6 +293,7 @@ contract CustomIntegrationBalancerv2 is CustomIntegration {
     {
         IBasePool pool = IBasePool(BytesLib.decodeOpDataAddressAssembly(_data, 12));
         IVault vault = IVault(vaultAddress);
+        ERC20 denomToken = ERC20(_tokenDenominator);
         bytes32 poolId = pool.getPoolId();
 
         (IERC20[] memory poolTokens, uint256[] memory balances, ) = vault.getPoolTokens(poolId);
@@ -300,13 +301,15 @@ contract CustomIntegrationBalancerv2 is CustomIntegration {
         uint256 sumTokensInDenominator;
         for (uint256 i = 0; i < poolTokens.length; ++i) {
             uint256 tokenInDenominator = balances[i]
-                .mul(_getPrice(address(poolTokens[i]), _tokenDenominator))
+                .mul(_getPrice(address(poolTokens[i]), address(denomToken)))
+                // multiply with decimals of the denominator token and divide by 10**18 because
+                // the price oracle will always give us 18 decimals
+                .mul(10 ** denomToken.decimals()).div(10 ** 18)
                 .div(10 ** ERC20(address(poolTokens[i])).decimals());
             sumTokensInDenominator = sumTokensInDenominator.add(tokenInDenominator);
         }
 
         ERC20 balToken = ERC20(address(pool));
-        ERC20 denomToken = ERC20(_tokenDenominator);
 
         // We need to make sure that tokens with different decimals work fine with each other.
         // What we get from the calculation is 
@@ -316,14 +319,18 @@ contract CustomIntegrationBalancerv2 is CustomIntegration {
         // and in the end we will have
         // balToken/denomToken * denomDecimals
         uint256 price = balToken.totalSupply()  // balToken * balDecimals
+            .mul(10 ** denomToken.decimals())   // * denomDecimals
+            .mul(10 ** denomToken.decimals())   // * denomDecimals
             .div(sumTokensInDenominator)        // / denomTokens / denomDecimals)
-            .mul(10 ** denomToken.decimals())   // * denomDecimals
-            .mul(10 ** denomToken.decimals())   // * denomDecimals
             .div(10 ** balToken.decimals());    // / balDecimals
 
         // add price slippage
         uint256 priceWithSlippage = price.mul(100 - priceSlippage).div(100);
-        return priceWithSlippage;
+
+        // Babylon expects the result to always have 18 decimals, regardless of the decimals of denominator token
+        uint256 priceWithSlippageFullDecimals = _getBalanceFullDecimals(priceWithSlippage, denomToken);
+        
+        return priceWithSlippageFullDecimals;
     }
 
     /* ============ Private Functions ============ */
