@@ -68,8 +68,6 @@ contract CustomIntegrationLiquity is CustomIntegration {
         bytes calldata, /* _data */
         uint8 /* _opType */
     ) internal view override returns (address) {
-        // No approval needed, as we are lending ETH
-        // Can't use address(0), so just use the borrower operations
         return address(liquityBorrowerOperations);
     }
 
