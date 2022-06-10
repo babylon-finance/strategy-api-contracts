@@ -307,8 +307,9 @@ describe.only('Balancer integration', function () {
     const protocolFee = await protocolFeeContract.getSwapFeePercentage();
     const protocolFeePercentage = protocolFee / eth(1);       // 1x10 ^ 18 = 100 % 
 
+    const expectedFeesUSDCWETH = amountToTrade * proportion * swapFeePercentage * protocolFeePercentage;
 
-    console.log("expectedFees USDC to WETH", amountToTrade * proportion * swapFeePercentage * protocolFeePercentage);
+    console.log("expectedFees USDC to WETH", expectedFeesUSDCWETH);
 
 
     let singleSwap = {
@@ -347,8 +348,9 @@ describe.only('Balancer integration', function () {
 
     console.log("WETH balance swapper", await WETH.balanceOf(usdcHolder.address));
 
+    const expectedFeesWETHUSDC = amountToTrade * proportion * swapFeePercentage * protocolFeePercentage;
 
-    console.log("expectedFees WETH to USDC", amountToTrade * proportion * swapFeePercentage * protocolFeePercentage);
+    console.log("expectedFees WETH to USDC", expectedFeesWETHUSDC);
 
     singleSwap = {
       poolId: poolId,
@@ -392,17 +394,29 @@ describe.only('Balancer integration', function () {
 
     console.log("usdcGardenBalanceWithSwaps", usdcGardenBalanceWithSwaps);
 
-    console.log(usdcGardenBalanceWithSwaps - usdcGardenBalanceNoSwaps);
 
+    const realizedProfitFromFees = usdcGardenBalanceWithSwaps - usdcGardenBalanceNoSwaps;
 
-    // TODO check why this doesnt work
-    // bl = balBalance                                bl          
-    // bs = balTotalSupply       expectedFees =   --------- * as * sF   
-    // as = amountSwapped                             bs   
-    // sf = swapFee%
-
+    console.log(realizedProfitFromFees);
 
     expect(usdcGardenBalanceWithSwaps).to.be.above(usdcGardenBalanceNoSwaps);
+
+
+
+
+
+    // bl = balBalance                                bl          
+    // bs = balTotalSupply       expectedFees =   --------- * as * sF *pf
+    // as = amountSwapped                             bs   
+    // sf = swapFee%
+    // pf = protocolFee % 
+
+    expect(realizedProfitFromFees / (10 ** USDCDecimals)).to.be.closeTo(expectedFeesUSDCWETH / (10 ** USDCDecimals) + expectedFeesWETHUSDC * 1924 / eth(1), 0.05)
+
+
+
+
+
 
 
 
