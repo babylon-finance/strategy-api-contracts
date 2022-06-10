@@ -129,6 +129,12 @@ contract CustomIntegrationBalancerv2 is CustomIntegration {
         (IERC20[] memory poolTokens, , ) = IVault(vaultAddress).getPoolTokens(poolId);
         require(_tokensIn.length == poolTokens.length, 'Must supply same number of tokens as are already in the pool!');
 
+        console.log('Enter data (Max amounts to enter)');
+
+        for (uint8 i = 0; i < _tokensIn.length; ++i) {
+            console.log(_tokensIn[i], _maxAmountsIn[i]);
+        }
+
         IVault.JoinPoolRequest memory joinRequest = _getJoinRequest(
             _tokensIn,
             poolTokens,
@@ -236,9 +242,12 @@ contract CustomIntegrationBalancerv2 is CustomIntegration {
         for (uint8 i = 0; i < poolTokens.length; ++i) {
             tokenBalanceTotal += _getBalanceFullDecimals(balances[i], poolTokens[i]);
         }
+        console.log('Token weights');
         for (uint8 i = 0; i < poolTokens.length; ++i) {
             _inputTokens[i] = address(poolTokens[i]);
             _inputWeights[i] = (_getBalanceFullDecimals(balances[i], poolTokens[i]) * (10**18)) / tokenBalanceTotal;
+
+            console.log(_inputTokens[i], _inputWeights[i]);
         }
 
         return (_inputTokens, _inputWeights);
@@ -270,12 +279,21 @@ contract CustomIntegrationBalancerv2 is CustomIntegration {
             bpt.totalSupply()
         );
 
+        uint256[] memory amountsOutSlippage = new uint256[](amountsOut.length);
+
+        console.log('Amounts minOut tokens');
+
         exitTokens = new address[](tokens.length);
         for (uint256 i = 0; i < tokens.length; ++i) {
             exitTokens[i] = address(tokens[i]);
+            amountsOutSlippage[i] = amountsOut[i].mul(100 - priceSlippage).div(100);
+            // amountsOutFullDecimals[i] = _getBalanceFullDecimals(amountsOut[i], tokens[i]);
+
+            console.log(address(tokens[i]), amountsOut[i]);
+            // console.log('amountsOutFullDecimals', i, amountsOutFullDecimals[i]);
         }
 
-        return (exitTokens, amountsOut);
+        return (exitTokens, amountsOutSlippage);
     }
 
     /**
@@ -302,34 +320,38 @@ contract CustomIntegrationBalancerv2 is CustomIntegration {
         for (uint256 i = 0; i < poolTokens.length; ++i) {
             uint256 tokenInDenominator = balances[i]
                 .mul(_getPrice(address(poolTokens[i]), address(denomToken)))
-                // multiply with decimals of the denominator token and divide by 10**18 because
-                // the price oracle will always give us 18 decimals
-                .mul(10 ** denomToken.decimals()).div(10 ** 18)
-                .div(10 ** ERC20(address(poolTokens[i])).decimals());
+                .mul(10**denomToken.decimals())
+                .div(10**18)
+                .div(
+                    // multiply with decimals of the denominator token and divide by 10**18 because
+                    // the price oracle will always give us 18 decimals
+                    10**ERC20(address(poolTokens[i])).decimals()
+                );
             sumTokensInDenominator = sumTokensInDenominator.add(tokenInDenominator);
         }
 
         ERC20 balToken = ERC20(address(pool));
 
         // We need to make sure that tokens with different decimals work fine with each other.
-        // What we get from the calculation is 
+        // What we get from the calculation is
         // (balToken * balDecimals) / (denomToken * denomDecimals)
         // so we multiply with denomDecimals * (denomDecimals / balDecimals) to get
         // balToken/denomToken  * (balDecimals / denomDecimals) * denomDecimals * (denomDecimals / balDecimals)
         // and in the end we will have
         // balToken/denomToken * denomDecimals
-        uint256 price = balToken.totalSupply()  // balToken * balDecimals
-            .mul(10 ** denomToken.decimals())   // * denomDecimals
-            .mul(10 ** denomToken.decimals())   // * denomDecimals
-            .div(sumTokensInDenominator)        // / denomTokens / denomDecimals)
-            .div(10 ** balToken.decimals());    // / balDecimals
+        uint256 price = balToken
+            .totalSupply()
+            .mul(10**denomToken.decimals())
+            .mul(10**denomToken.decimals())
+            .div(sumTokensInDenominator)
+            .div(10**balToken.decimals()); // balToken * balDecimals // * denomDecimals // * denomDecimals // / denomTokens / denomDecimals) // / balDecimals
 
         // add price slippage
         uint256 priceWithSlippage = price.mul(100 - priceSlippage).div(100);
 
         // Babylon expects the result to always have 18 decimals, regardless of the decimals of denominator token
         uint256 priceWithSlippageFullDecimals = _getBalanceFullDecimals(priceWithSlippage, denomToken);
-        
+
         return priceWithSlippageFullDecimals;
     }
 
