@@ -40,6 +40,7 @@ contract CustomIntegrationBalancerv2 is CustomIntegration {
     /* ============ State Variables ============ */
 
     address private constant vaultAddress = 0xBA12222222228d8Ba445958a75a0704d566BF2C8;
+    address private constant usdcAddress = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
 
     // Allowable slippage for the price of pool tokens in percent.
     uint8 private constant priceSlippage = 5;
@@ -240,12 +241,18 @@ contract CustomIntegrationBalancerv2 is CustomIntegration {
         _inputTokens = new address[](poolTokens.length);
 
         for (uint8 i = 0; i < poolTokens.length; ++i) {
-            tokenBalanceTotal += _getBalanceFullDecimals(balances[i], poolTokens[i]);
+            tokenBalanceTotal += _getBalanceFullDecimals(balances[i], poolTokens[i]).mul(
+                _getPrice(address(poolTokens[i]), address(usdcAddress))
+            );
         }
         console.log('Token weights');
         for (uint8 i = 0; i < poolTokens.length; ++i) {
             _inputTokens[i] = address(poolTokens[i]);
-            _inputWeights[i] = (_getBalanceFullDecimals(balances[i], poolTokens[i]) * (10**18)) / tokenBalanceTotal;
+            _inputWeights[i] =
+                (_getBalanceFullDecimals(balances[i], poolTokens[i]) * (10**18)).mul(
+                    _getPrice(address(poolTokens[i]), address(usdcAddress))
+                ) /
+                tokenBalanceTotal;
 
             console.log(_inputTokens[i], _inputWeights[i]);
         }
