@@ -1,4 +1,14 @@
 const { ethers } = require('hardhat');
+const { tokens, holders } = require('../../lib/addresses');
+
+// Whale addresses to impersonate when we need to get a huge amount of a token
+const WHALES = {
+  USDC: "0xE78388b4CE79068e89Bf8aA7f218eF6b9AB0e9d0", // USDC
+  WETH: "0xE78388b4CE79068e89Bf8aA7f218eF6b9AB0e9d0", // WETH
+  DAI: "0xE78388b4CE79068e89Bf8aA7f218eF6b9AB0e9d0", // DAI
+  USDT: "0xE78388b4CE79068e89Bf8aA7f218eF6b9AB0e9d0", // USDT
+}
+
 /**
  * Advance blockchain time by value. Has a random chance to deviate by 1 second.
  * Consider this during tests. Use `closeTo`.
@@ -90,6 +100,32 @@ function skipIfFast() {
   return !!FAST ? describe.skip : describe;
 }
 
+function getTokenName(tokenAddress) {
+  for ([tokenName, address] of Object.entries(tokens)) {
+    if (address === tokenAddress) {
+      return tokenName;
+    }
+  }
+
+  throw `No token name found for address ${tokenAddress}`;
+}
+
+function getHolderForTokenAddress(tokenAddress) {
+  return getHolderForToken(getTokenName(tokenAddress));
+}
+
+function getHolderForToken(token) {
+  // TODO check if we can use the imported holders from addresses
+  // holders in that array don't seem to hold the correct tokens
+  //const tokenHolders = holders;
+  const tokenHolders = WHALES;
+  if (token in tokenHolders) {
+    return tokenHolders[token];
+  }
+
+  throw `No whale defined for token ${token}`;
+}
+
 module.exports = {
   pick,
   skipIfFast,
@@ -106,6 +142,8 @@ module.exports = {
   eth,
   normalizeDecimals,
   enums,
+  getHolderForToken,
+  getHolderForTokenAddress,
   proposalState: enums('Pending', 'Active', 'Canceled', 'Defeated', 'Succeeded', 'Queued', 'Expired', 'Executed'),
   voteType: enums('Against', 'For', 'Abstain'),
 };
