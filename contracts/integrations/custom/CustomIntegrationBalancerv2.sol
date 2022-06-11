@@ -19,8 +19,6 @@ import {PoolBalances} from '@balancer-labs/v2-vault/contracts/PoolBalances.sol';
 
 import {WeightedMath} from './WeightedMath.sol';
 
-import 'hardhat/console.sol';
-
 /**
  * @title Custom integration for the Balancer V2 protocol
  * @author ChrisiPK, MartelAxe
@@ -122,12 +120,6 @@ contract CustomIntegrationBalancerv2 is CustomIntegration {
 
         (IERC20[] memory poolTokens, , ) = IVault(vaultAddress).getPoolTokens(poolId);
         require(_tokensIn.length == poolTokens.length, 'Must supply same number of tokens as are already in the pool!');
-
-        console.log('Enter data (Max amounts to enter)');
-
-        for (uint8 i = 0; i < _tokensIn.length; ++i) {
-            console.log(_tokensIn[i], _maxAmountsIn[i]);
-        }
 
         IVault.JoinPoolRequest memory joinRequest = _getJoinRequest(
             _tokensIn,
@@ -238,7 +230,6 @@ contract CustomIntegrationBalancerv2 is CustomIntegration {
                 _getPrice(address(poolTokens[i]), address(usdcAddress))
             );
         }
-        console.log('Token weights');
         for (uint8 i = 0; i < poolTokens.length; ++i) {
             _inputTokens[i] = address(poolTokens[i]);
             _inputWeights[i] =
@@ -246,8 +237,6 @@ contract CustomIntegrationBalancerv2 is CustomIntegration {
                     _getPrice(address(poolTokens[i]), address(usdcAddress))
                 ) /
                 tokenBalanceTotal;
-
-            console.log(_inputTokens[i], _inputWeights[i]);
         }
 
         return (_inputTokens, _inputWeights);
@@ -281,16 +270,10 @@ contract CustomIntegrationBalancerv2 is CustomIntegration {
 
         uint256[] memory amountsOutSlippage = new uint256[](amountsOut.length);
 
-        console.log('Amounts minOut tokens');
-
         exitTokens = new address[](tokens.length);
         for (uint256 i = 0; i < tokens.length; ++i) {
             exitTokens[i] = address(tokens[i]);
             amountsOutSlippage[i] = amountsOut[i].mul(100 - priceSlippage).div(100);
-            // amountsOutFullDecimals[i] = _getBalanceFullDecimals(amountsOut[i], tokens[i]);
-
-            console.log(address(tokens[i]), amountsOut[i]);
-            // console.log('amountsOutFullDecimals', i, amountsOutFullDecimals[i]);
         }
 
         return (exitTokens, amountsOutSlippage);

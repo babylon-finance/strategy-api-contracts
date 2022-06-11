@@ -17,8 +17,6 @@ import {BytesLib} from '../../lib/BytesLib.sol';
 
 import {BaseIntegration} from '../BaseIntegration.sol';
 
-import 'hardhat/console.sol';
-
 /**
  * @title CustomIntegration
  * @author Babylon Finance Protocol
@@ -83,28 +81,6 @@ abstract contract CustomIntegration is BaseIntegration, ReentrancyGuard, ICustom
         CustomInfo memory customInfo = _createCustomInfo(_strategy, _data, _resultTokensOut);
         _validatePreJoinCustomData(customInfo);
 
-        console.log('Before Entering  values usdc, usdt, dai, weth');
-
-        console.log(
-            'USDC',
-            IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48).balanceOf(0x65E1117E6613376fBC43A6744FcD966732EF2054)
-        );
-
-        console.log(
-            'USDT',
-            IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7).balanceOf(0x65E1117E6613376fBC43A6744FcD966732EF2054)
-        );
-
-        console.log(
-            'DAI',
-            IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F).balanceOf(0x65E1117E6613376fBC43A6744FcD966732EF2054)
-        );
-
-        console.log(
-            'WETH',
-            IERC20(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2).balanceOf(0x65E1117E6613376fBC43A6744FcD966732EF2054)
-        );
-
         // Pre actions
         (address targetAddressP, uint256 callValueP, bytes memory methodDataP) = _getPreActionCallData(
             _strategy,
@@ -143,28 +119,6 @@ abstract contract CustomIntegration is BaseIntegration, ReentrancyGuard, ICustom
         customInfo.resultTokensInTransaction = IERC20(customInfo.resultToken)
             .balanceOf(address(customInfo.strategy))
             .sub(customInfo.resultTokensInStrategy);
-
-        console.log('After Entering  values usdc, usdt, dai, weth');
-
-        console.log(
-            'USDC',
-            IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48).balanceOf(0x65E1117E6613376fBC43A6744FcD966732EF2054)
-        );
-
-        console.log(
-            'USDT',
-            IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7).balanceOf(0x65E1117E6613376fBC43A6744FcD966732EF2054)
-        );
-
-        console.log(
-            'DAI',
-            IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F).balanceOf(0x65E1117E6613376fBC43A6744FcD966732EF2054)
-        );
-
-        console.log(
-            'WETH',
-            IERC20(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2).balanceOf(0x65E1117E6613376fBC43A6744FcD966732EF2054)
-        );
 
         // Post actions
         (targetAddressP, callValueP, methodDataP) = _getPostActionCallData(
@@ -239,28 +193,6 @@ abstract contract CustomIntegration is BaseIntegration, ReentrancyGuard, ICustom
             _minAmountsOut
         );
         customInfo.strategy.invokeFromIntegration(target, callValue, methodData);
-
-        console.log('EXIT  values usdc, usdt, dai, weth');
-
-        console.log(
-            'USDC',
-            IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48).balanceOf(0x65E1117E6613376fBC43A6744FcD966732EF2054)
-        );
-
-        console.log(
-            'USDT',
-            IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7).balanceOf(0x65E1117E6613376fBC43A6744FcD966732EF2054)
-        );
-
-        console.log(
-            'DAI',
-            IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F).balanceOf(0x65E1117E6613376fBC43A6744FcD966732EF2054)
-        );
-
-        console.log(
-            'WETH',
-            IERC20(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2).balanceOf(0x65E1117E6613376fBC43A6744FcD966732EF2054)
-        );
 
         // Post actions
         (targetAddressP, callValueP, methodDataP) = _getPostActionCallData(
