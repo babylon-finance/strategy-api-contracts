@@ -4,7 +4,7 @@ pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
 import {IAsset} from '@balancer-labs/v2-vault/contracts/interfaces/IAsset.sol';
-import {IBasePool} from '@balancer-labs/v2-vault/contracts/interfaces/IBasePool.sol';
+import {BasePool} from '@balancer-labs/v2-pool-utils/contracts/BasePool.sol';
 import {IERC20} from '@balancer-labs/v2-solidity-utils/contracts/openzeppelin/IERC20.sol';
 import {ERC20} from '@balancer-labs/v2-solidity-utils/contracts/openzeppelin/ERC20.sol';
 import {IVault} from '@balancer-labs/v2-vault/contracts/interfaces/IVault.sol';
@@ -20,13 +20,6 @@ import {PoolBalances} from '@balancer-labs/v2-vault/contracts/PoolBalances.sol';
 import {WeightedMath} from './WeightedMath.sol';
 
 import 'hardhat/console.sol';
-
-/**
- * @title Interface to supply the getVault function missing in IBasePool
- */
-interface IMinimalPool {
-    function getVault() external view returns (IVault);
-}
 
 /**
  * @title Custom integration for the Balancer V2 protocol
@@ -65,7 +58,7 @@ contract CustomIntegrationBalancerv2 is CustomIntegration {
      * @return bool                      True if the data is correct
      */
     function _isValid(bytes memory _data) internal view override returns (bool) {
-        return address(IMinimalPool(BytesLib.decodeOpDataAddressAssembly(_data, 12)).getVault()) == vaultAddress;
+        return address(BasePool(BytesLib.decodeOpDataAddressAssembly(_data, 12)).getVault()) == vaultAddress;
     }
 
     /**
@@ -123,7 +116,7 @@ contract CustomIntegrationBalancerv2 is CustomIntegration {
             bytes memory
         )
     {
-        bytes32 poolId = IBasePool(BytesLib.decodeOpDataAddress(_data)).getPoolId();
+        bytes32 poolId = BasePool(BytesLib.decodeOpDataAddress(_data)).getPoolId();
         address strategy = _strategy;
         uint256 resultTokensOut = _resultTokensOut;
 
@@ -182,7 +175,7 @@ contract CustomIntegrationBalancerv2 is CustomIntegration {
             bytes memory
         )
     {
-        bytes32 poolId = IBasePool(BytesLib.decodeOpDataAddress(_data)).getPoolId();
+        bytes32 poolId = BasePool(BytesLib.decodeOpDataAddress(_data)).getPoolId();
         address strategy = _strategy;
         uint256 resultTokensIn = _resultTokensIn;
 
@@ -230,7 +223,7 @@ contract CustomIntegrationBalancerv2 is CustomIntegration {
         override
         returns (address[] memory _inputTokens, uint256[] memory _inputWeights)
     {
-        IBasePool pool = IBasePool(BytesLib.decodeOpDataAddressAssembly(_data, 12));
+        BasePool pool = BasePool(BytesLib.decodeOpDataAddressAssembly(_data, 12));
         IVault vault = IVault(vaultAddress);
         bytes32 poolId = pool.getPoolId();
 
@@ -273,7 +266,7 @@ contract CustomIntegrationBalancerv2 is CustomIntegration {
         bytes calldata _data,
         uint256 _liquidity
     ) external view override returns (address[] memory exitTokens, uint256[] memory _minAmountsOut) {
-        IBasePool pool = IBasePool(BytesLib.decodeOpDataAddressAssembly(_data, 12));
+        BasePool pool = BasePool(BytesLib.decodeOpDataAddressAssembly(_data, 12));
         IVault vault = IVault(vaultAddress);
         bytes32 poolId = pool.getPoolId();
         IERC20 bpt = IERC20(BytesLib.decodeOpDataAddressAssembly(_data, 12));
@@ -316,7 +309,7 @@ contract CustomIntegrationBalancerv2 is CustomIntegration {
         override
         returns (uint256)
     {
-        IBasePool pool = IBasePool(BytesLib.decodeOpDataAddressAssembly(_data, 12));
+        BasePool pool = BasePool(BytesLib.decodeOpDataAddressAssembly(_data, 12));
         IVault vault = IVault(vaultAddress);
         ERC20 denomToken = ERC20(_tokenDenominator);
         bytes32 poolId = pool.getPoolId();
