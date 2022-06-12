@@ -50,13 +50,35 @@ contract CustomIntegrationBalancerv2 is CustomIntegration {
     /* =============== Internal Functions ============== */
 
     /**
-     * Whether or not the data provided is valid. Checks if the supplied address is a Balancer V2 pool contract.
+     * Whether or not the data provided is valid. Checks if the supplied address is a Balancer V2 pool contract
+     * and the pool is not empty.
      *
      * @param  _data                     Data provided
      * @return bool                      True if the data is correct
      */
     function _isValid(bytes memory _data) internal view override returns (bool) {
-        return address(BasePool(BytesLib.decodeOpDataAddressAssembly(_data, 12)).getVault()) == vaultAddress;
+        BasePool pool = BasePool(BytesLib.decodeOpDataAddressAssembly(_data, 12));
+
+        if (address(pool.getVault()) != vaultAddress) {
+            return false;
+        }
+        
+        IVault vault = IVault(vaultAddress);
+        bytes32 poolId = pool.getPoolId();
+
+        (, uint256[] memory balances, ) = vault.getPoolTokens(poolId);
+        uint256 balanceSum;
+        for (uint8 i = 0; i < balances.length; ++i) {
+            balanceSum += balances[i];
+        }
+
+        // We cannot enter empty pools because we rely on the balances
+        // to find our input weights
+        if (balanceSum == 0) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -230,6 +252,9 @@ contract CustomIntegrationBalancerv2 is CustomIntegration {
                 _getPrice(address(poolTokens[i]), address(usdcAddress))
             );
         }
+
+        require(tokenBalanceTotal > 0, "Balance of all tokens in USDC cannot be zero!");
+
         for (uint8 i = 0; i < poolTokens.length; ++i) {
             _inputTokens[i] = address(poolTokens[i]);
             _inputWeights[i] =
