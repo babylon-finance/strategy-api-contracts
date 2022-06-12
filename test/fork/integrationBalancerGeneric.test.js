@@ -11,6 +11,8 @@ const WETH = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2';
 const NFT_URI = 'https://babylon.mypinata.cloud/ipfs/QmcL826qNckBzEk2P11w4GQrrQFwGvR6XmUCuQgBX9ck1v';
 const NFT_SEED = '504592746';
 
+let weightedPool3Token;
+
 const BALANCER_POOLS = {
   'USDC-DAI-USDT StablePool': {
     poolAddress: '0x06Df3b2bbB68adc8B0e302443692037ED9f91b42',
@@ -24,6 +26,9 @@ const BALANCER_POOLS = {
   'wBTC-BADGER WeightedPool': {
     poolAddress: '0xb460DAa847c45f1C4a41cb05BFB3b51c92e41B36',
   },
+  'MKR-WETH-USDT WeightedPool': {
+    poolAddress: weightedPool3Token,
+  },
 }
 
 // Defines the swap amounts for different tokens.
@@ -34,11 +39,12 @@ const BALANCER_SWAP_AMOUNTS = {
   WBTC: 10,
 }
 
+
 describe.only('Balancer V2 integration', function () {
   let keeper, alice, bob, garden, controller, owner, wethToken;
 
   // Gets the amount of tokens to swap when testing a balancer pool.
-  const getSwapAmount = async function(erc20Token) {
+  const getSwapAmount = async function (erc20Token) {
     const tokenName = getTokenName(erc20Token.address);
 
     let amountWithoutDecimals;
@@ -54,6 +60,7 @@ describe.only('Balancer V2 integration', function () {
   }
 
   before(async () => {
+
     wethToken = await getERC20(WETH);
     [, keeper, alice, bob] = await ethers.getSigners();
     controller = await ethers.getContractAt('IBabController', '0xD4a5b5fcB561dAF3aDF86F8477555B92FBa43b5F');
@@ -63,6 +70,14 @@ describe.only('Balancer V2 integration', function () {
     if (!keeperAdded) {
       await controller.connect(owner).addKeeper(keeper.address);
     }
+
+    weightedPool3Token = await createPool();
+
+    console.log(weightedPool3Token);
+
+    await joinPool(bob);
+
+
 
     // Creates a garden with custom integrations enabled
     const contribution = eth(1);
@@ -180,7 +195,7 @@ describe.only('Balancer V2 integration', function () {
       balanceWithoutSwaps = await wethToken.balanceOf(garden.address);
     });
 
-    testFn(`can receive rewards from swapping with the Balancer V2 integration: ${poolName}`, async function() {
+    testFn(`can receive rewards from swapping with the Balancer V2 integration: ${poolName}`, async function () {
       if (!deploySuccessful) {
         this.skip();
       }
@@ -237,7 +252,7 @@ describe.only('Balancer V2 integration', function () {
       const poolTokens = await vault.getPoolTokens(poolId);
       for (let i = 0; i < poolTokens.tokens.length - 1; ++i) {
         const tokenOne = await getERC20(poolTokens.tokens[i]);
-        const tokenTwo = await getERC20(poolTokens.tokens[i+1]);
+        const tokenTwo = await getERC20(poolTokens.tokens[i + 1]);
 
         const tokenOneHolder = await impersonateAddress(getHolderForTokenAddress(tokenOne.address));
 
@@ -299,3 +314,99 @@ describe.only('Balancer V2 integration', function () {
     });
   }
 });
+
+
+
+async function createPool() {
+
+
+  const WEIGHTED_POOL_FACTORY = '0x8E9aa87E45e92bad84D5F8DD1bff34Fb92637dE9';
+  const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
+
+  const MKR = '0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2';
+  const WETH = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2';
+  const USDT = '0xdac17f958d2ee523a2206206994597c13d831ec7';
+  const tokens = [MKR, WETH, USDT];
+
+
+  const NAME = 'Three-token Test Pool';
+  const SYMBOL = '70MKR-15WETH-15USDT';
+  const swapFeePercentage = eth(0.005); // 0.5%
+  const weights = [eth(0.7), eth(0.15), eth(0.15)];
+
+
+  const factory = await ethers.getContractAt('IWeightedPoolFactory', WEIGHTED_POOL_FACTORY);
+
+  const tx = await factory.create(NAME, SYMBOL, tokens, weights, swapFeePercentage, ZERO_ADDRESS);
+  const rc = await tx.wait();
+
+
+  const events = rc.events.filter((e) => e.topics[0] === '0x83a48fbcfc991335314e74d0496aab6a1987e992ddc85dddbcc4d6dd6ef2e9fc')// CreatePool
+
+
+  const str = events[0].topics[1].toString();
+
+  const address = str.slice(0, 2) + str.slice(26, str.length);
+
+  return address;
+
+
+}
+
+
+
+async function joinPool(bob) {
+
+  const makerUSDTHolder = await impersonateAddress("0xF977814e90dA44bFA03b6295A0616a897441aceC");
+  const wethHolder = await impersonateAddress("0xD292b72e5C787f9F7E092aB7802aDDF76930981F");
+
+  const MAKER = await getERC20("0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2");
+  const USDT = await getERC20("0xdAC17F958D2ee523a2206206994597C13D831ec7");
+  const WETH = await getERC20("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2");
+
+  console.log(weightedPool3Token);
+
+  const basePool = await ethers.getContractAt("BasePool", weightedPool3Token);
+  const poolId = await basePool.getPoolId();
+
+  // Transfering to bob
+
+
+  await MAKER.connect(makerUSDTHolder).transfer(bob.address, eth(300));
+  await WETH.connect(wethHolder).transfer(bob.address, eth(300));
+  console.log("test");
+  await USDT.connect(makerUSDTHolder).transfer(bob.address, 1000000 * (10 ** 6));   // Sending 1 million USDT
+
+
+  //Join pool  
+
+  const joinKindInit = 1; /* EXACT_TOKENS_IN_FOR_BPT_OUT */
+  const maxAmountsIn = [eth(300), eth(300), 1000000 * (10 ** 6)];
+  // const maxAmountsIn = [1, eth(1)];
+  const minimumBPT = 0;
+  // const assetsJoin = [await ethers.getContractAt("IAsset", WETH.address), await ethers.getContractAt("IAsset", USDC.address)];
+
+  const assetsJoin = [MAKER.address, WETH.address, USDT.address];
+
+  const userDataJoin = new ethers.utils.AbiCoder().encode(
+    ['uint256', 'uint256[]', 'uint256'],
+    [joinKindInit, maxAmountsIn, minimumBPT]);
+
+
+
+  const joinPoolRequest = {
+    assets: assetsJoin,
+    maxAmountsIn: maxAmountsIn,
+    userData: userDataJoin,
+    fromInternalBalance: false
+  }
+
+  console.log("join Pool");
+  await USDT.connect(bob).approve(vault.address, eth(400000000000000000));
+  await WETH.connect(bob).approve(vault.address, eth(400000000000000000));
+  await MAKER.connect(bob).approve(vault.address, eth(400000000000000000));
+
+
+  await vault.connect(bob).joinPool(poolId, bob.address, bob.address, joinPoolRequest);
+  console.log("joined Pool");
+}
