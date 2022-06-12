@@ -1,6 +1,6 @@
 const { expect } = require('chai');
 const { ethers } = require('hardhat');
-const { getERC20, increaseTime, getHolderForTokenAddress, getTokenName } = require('../utils/test-helpers');
+const { getERC20, increaseTime, getHolderForTokenAddress, getTokenName, getTokenAddress, getHolderForToken } = require('../utils/test-helpers');
 const { ADDRESS_ZERO, ONE_DAY_IN_SECONDS } = require('../../lib/constants');
 const { impersonateAddress } = require('../../lib/rpc');
 const { eth } = require('../../lib/helpers');
@@ -10,6 +10,8 @@ const { deploy } = deployments;
 const WETH = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2';
 const NFT_URI = 'https://babylon.mypinata.cloud/ipfs/QmcL826qNckBzEk2P11w4GQrrQFwGvR6XmUCuQgBX9ck1v';
 const NFT_SEED = '504592746';
+
+const BALANCER_VAULT = '0xBA12222222228d8Ba445958a75a0704d566BF2C8';
 
 let weightedPool3Token;
 
@@ -125,7 +127,7 @@ describe.only('Balancer V2 integration', function () {
     const testFn = data.skip ? it.skip : it;
 
     testFn(`can deploy a strategy with the Balancer V2 integration: ${poolName}`, async function () {
-      const vault = await ethers.getContractAt("IVault", "0xBA12222222228d8Ba445958a75a0704d566BF2C8");
+      const vault = await ethers.getContractAt("IVault", BALANCER_VAULT);
       const basePool = await ethers.getContractAt("BasePool", data.poolAddress);
       const poolId = await basePool.getPoolId();
       const bptToken = await getERC20(data.poolAddress);
@@ -356,27 +358,21 @@ async function createPool() {
 
 
 async function joinPool(bob) {
+  const makerHolder = await impersonateAddress(getHolderForToken('MKR'));
+  const usdtHolder = await impersonateAddress(getHolderForToken('USDT'));
+  const wethHolder = await impersonateAddress(getHolderForToken('WETH'));
 
-  const makerUSDTHolder = await impersonateAddress("0xF977814e90dA44bFA03b6295A0616a897441aceC");
-  const wethHolder = await impersonateAddress("0xD292b72e5C787f9F7E092aB7802aDDF76930981F");
-
-  const MAKER = await getERC20("0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2");
-  const USDT = await getERC20("0xdAC17F958D2ee523a2206206994597C13D831ec7");
-  const WETH = await getERC20("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2");
-
-  console.log(weightedPool3Token);
+  const MAKER = await getERC20(getTokenAddress('MKR'));
+  const USDT = await getERC20(getTokenAddress('USDT'));
+  const WETH = await getERC20(getTokenAddress('WETH'));
 
   const basePool = await ethers.getContractAt("BasePool", weightedPool3Token);
   const poolId = await basePool.getPoolId();
 
-  // Transfering to bob
-
-
-  await MAKER.connect(makerUSDTHolder).transfer(bob.address, eth(300));
+  // Transferring to bob
+  await MAKER.connect(makerHolder).transfer(bob.address, eth(300));
   await WETH.connect(wethHolder).transfer(bob.address, eth(300));
-  console.log("test");
-  await USDT.connect(makerUSDTHolder).transfer(bob.address, 1000000 * (10 ** 6));   // Sending 1 million USDT
-
+  await USDT.connect(usdtHolder).transfer(bob.address, ethers.BigNumber.from(1000000).mul(ethers.BigNumber.from(10).pow(6)));
 
   //Join pool  
 
@@ -402,6 +398,7 @@ async function joinPool(bob) {
   }
 
   console.log("join Pool");
+  const vault = await ethers.getContractAt("IVault", BALANCER_VAULT);
   await USDT.connect(bob).approve(vault.address, eth(400000000000000000));
   await WETH.connect(bob).approve(vault.address, eth(400000000000000000));
   await MAKER.connect(bob).approve(vault.address, eth(400000000000000000));

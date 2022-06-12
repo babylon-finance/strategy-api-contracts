@@ -115,6 +115,14 @@ function getHolderForToken(token) {
   throw `No holder defined for token ${token}`;
 }
 
+function getTokenAddress(tokenName) {
+  if (tokenName in tokens) {
+    return tokens[tokenName];
+  }
+
+  throw `No address defined for token ${tokenName}`;
+}
+
 module.exports = {
   pick,
   skipIfFast,
@@ -134,6 +142,7 @@ module.exports = {
   getHolderForToken,
   getHolderForTokenAddress,
   getTokenName,
+  getTokenAddress,
   proposalState: enums('Pending', 'Active', 'Canceled', 'Defeated', 'Succeeded', 'Queued', 'Expired', 'Executed'),
   voteType: enums('Against', 'For', 'Abstain'),
 };
