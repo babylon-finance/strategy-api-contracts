@@ -133,6 +133,7 @@ module.exports = {
   enums,
   getHolderForToken,
   getHolderForTokenAddress,
+  getTokenName,
   proposalState: enums('Pending', 'Active', 'Canceled', 'Defeated', 'Succeeded', 'Queued', 'Expired', 'Executed'),
   voteType: enums('Against', 'For', 'Abstain'),
 };

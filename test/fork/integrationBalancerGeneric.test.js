@@ -1,6 +1,6 @@
 const { expect } = require('chai');
 const { ethers } = require('hardhat');
-const { getERC20, increaseTime, getHolderForTokenAddress } = require('../utils/test-helpers');
+const { getERC20, increaseTime, getHolderForTokenAddress, getTokenName } = require('../utils/test-helpers');
 const { ADDRESS_ZERO, ONE_DAY_IN_SECONDS } = require('../../lib/constants');
 const { impersonateAddress } = require('../../lib/rpc');
 const { eth } = require('../../lib/helpers');
@@ -12,16 +12,46 @@ const NFT_URI = 'https://babylon.mypinata.cloud/ipfs/QmcL826qNckBzEk2P11w4GQrrQF
 const NFT_SEED = '504592746';
 
 const BALANCER_POOLS = {
-  "USDC-DAI-USDT Stable Pool": {
+  'USDC-DAI-USDT StablePool': {
     poolAddress: '0x06Df3b2bbB68adc8B0e302443692037ED9f91b42',
   },
-  "USDC-WETH Weighted Pool": {
+  'USDC-WETH WeightedPool2Token': {
     poolAddress: '0x96646936b91d6B9D7D0c47C496AfBF3D6ec7B6f8',
+  },
+  'wstETH-ETH MetaStablePool': {
+    poolAddress: '0x32296969ef14eb0c6d29669c550d4a0449130230',
+  },
+  'wBTC-BADGER WeightedPool': {
+    poolAddress: '0xb460DAa847c45f1C4a41cb05BFB3b51c92e41B36',
   },
 }
 
-describe('Balancer integration', function () {
+// Defines the swap amounts for different tokens.
+// These values are without decimals.
+const BALANCER_SWAP_AMOUNTS = {
+  default: 1000000,
+  wstETH: 1000,
+  WBTC: 10,
+}
+
+describe.only('Balancer V2 integration', function () {
   let keeper, alice, bob, garden, controller, owner, wethToken;
+
+  // Gets the amount of tokens to swap when testing a balancer pool.
+  const getSwapAmount = async function(erc20Token) {
+    const tokenName = getTokenName(erc20Token.address);
+
+    let amountWithoutDecimals;
+    if (tokenName in BALANCER_SWAP_AMOUNTS) {
+      amountWithoutDecimals = BALANCER_SWAP_AMOUNTS[tokenName];
+    } else {
+      amountWithoutDecimals = BALANCER_SWAP_AMOUNTS.default;
+    }
+
+    const decimals = await erc20Token.decimals();
+    const swapAmount = ethers.BigNumber.from(amountWithoutDecimals).mul(ethers.BigNumber.from(10).pow(decimals));
+    return swapAmount;
+  }
 
   before(async () => {
     wethToken = await getERC20(WETH);
@@ -77,7 +107,9 @@ describe('Balancer integration', function () {
     let deploySuccessful = false;
     let balanceWithoutSwaps;
 
-    it(`can deploy a strategy with the Balancer V2 integration: ${poolName}`, async function () {
+    const testFn = data.skip ? it.skip : it;
+
+    testFn(`can deploy a strategy with the Balancer V2 integration: ${poolName}`, async function () {
       const vault = await ethers.getContractAt("IVault", "0xBA12222222228d8Ba445958a75a0704d566BF2C8");
       const basePool = await ethers.getContractAt("BasePool", data.poolAddress);
       const poolId = await basePool.getPoolId();
@@ -148,7 +180,7 @@ describe('Balancer integration', function () {
       balanceWithoutSwaps = await wethToken.balanceOf(garden.address);
     });
 
-    it(`can receive rewards from swapping with the Balancer V2 integration: ${poolName}`, async function() {
+    testFn(`can receive rewards from swapping with the Balancer V2 integration: ${poolName}`, async function() {
       if (!deploySuccessful) {
         this.skip();
       }
@@ -209,8 +241,7 @@ describe('Balancer integration', function () {
 
         const tokenOneHolder = await impersonateAddress(getHolderForTokenAddress(tokenOne.address));
 
-        const tokenOneDecimals = await tokenOne.decimals();
-        const amountToSwap = ethers.BigNumber.from(1000000).mul(ethers.BigNumber.from(10).pow(tokenOneDecimals)); // swap 1 million of the input tokens
+        const amountToSwap = await getSwapAmount(tokenOne);
         const tokenTwoBalanceBeforeSwap = await tokenTwo.balanceOf(tokenOneHolder.address);
 
         const singleSwap = {
@@ -233,7 +264,7 @@ describe('Balancer integration', function () {
         let blockBefore = await ethers.provider.getBlock(blockNumber);
 
         await tokenOne.connect(tokenOneHolder).approve(vault.address, amountToSwap);
-        const tx = await vault.connect(tokenOneHolder).swap(singleSwap, funds, 0, (blockBefore.timestamp + 10));
+        const tx = await vault.connect(tokenOneHolder).swap(singleSwap, funds, 0, (blockBefore.timestamp + 20));
         await tx.wait(1);
 
         const tokenTwoBalanceAfterSwap = await tokenTwo.balanceOf(tokenOneHolder.address);
@@ -252,7 +283,7 @@ describe('Balancer integration', function () {
         blockBefore = await ethers.provider.getBlock(blockNumber);
 
         await tokenTwo.connect(tokenOneHolder).approve(vault.address, amountToSwapBack);
-        const tx2 = await vault.connect(tokenOneHolder).swap(singleSwapBack, funds, 0, (blockBefore.timestamp + 10));
+        const tx2 = await vault.connect(tokenOneHolder).swap(singleSwapBack, funds, 0, (blockBefore.timestamp + 20));
         await tx2.wait(1);
       }
 
