@@ -44,7 +44,7 @@ const BALANCER_SWAP_AMOUNTS = {
 }
 
 
-describe.only('Balancer V2 integration', function () {
+describe('Balancer V2 integration', function () {
   let keeper, alice, bob, garden, controller, owner, wethToken;
 
   // Gets the amount of tokens to swap when testing a balancer pool.
