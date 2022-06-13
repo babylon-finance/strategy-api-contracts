@@ -8,6 +8,7 @@ import {BasePool} from '@balancer-labs/v2-pool-utils/contracts/BasePool.sol';
 import {IERC20} from '@balancer-labs/v2-solidity-utils/contracts/openzeppelin/IERC20.sol';
 import {ERC20} from '@balancer-labs/v2-solidity-utils/contracts/openzeppelin/ERC20.sol';
 import {IVault} from '@balancer-labs/v2-vault/contracts/interfaces/IVault.sol';
+import {WeightedMath} from '@balancer-labs/v2-pool-weighted/contracts/WeightedMath.sol';
 
 import {IBabController} from '../../interfaces/IBabController.sol';
 import {CustomIntegration} from './CustomIntegration.sol';
@@ -15,9 +16,6 @@ import {PreciseUnitMath} from '../../lib/PreciseUnitMath.sol';
 import {LowGasSafeMath} from '../../lib/LowGasSafeMath.sol';
 import {BytesLib} from '../../lib/BytesLib.sol';
 import {ControllerLib} from '../../lib/ControllerLib.sol';
-import {PoolBalances} from '@balancer-labs/v2-vault/contracts/PoolBalances.sol';
-
-import {WeightedMath} from '@balancer-labs/v2-pool-weighted/contracts/WeightedMath.sol';
 
 /**
  * @title Custom integration for the Balancer V2 protocol
