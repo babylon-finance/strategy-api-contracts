@@ -82,12 +82,8 @@ abstract contract CustomIntegration is BaseIntegration, ReentrancyGuard, ICustom
         _validatePreJoinCustomData(customInfo);
 
         // Pre actions
-        (address targetAddressP, uint256 callValueP, bytes memory methodDataP) = _getPreActionCallData(
-            _strategy,
-            customInfo.addressParam,
-            _resultTokensOut,
-            0
-        );
+        (address targetAddressP, uint256 callValueP, bytes memory methodDataP) =
+            _getPreActionCallData(_strategy, customInfo.addressParam, _resultTokensOut, 0);
         if (targetAddressP != address(0)) {
             // Approve spending of the pre action token
             (address approvalAsset, address spenderPre) = _preActionNeedsApproval(customInfo.addressParam, 0);
@@ -107,15 +103,9 @@ abstract contract CustomIntegration is BaseIntegration, ReentrancyGuard, ICustom
                 }
             }
         }
-        (address target, uint256 callValue, bytes memory methodData) = _getEnterCalldata(
-            _strategy,
-            _data,
-            _resultTokensOut,
-            _tokensIn,
-            _maxAmountsIn
-        );
+        (address target, uint256 callValue, bytes memory methodData) =
+            _getEnterCalldata(_strategy, _data, _resultTokensOut, _tokensIn, _maxAmountsIn);
         customInfo.strategy.invokeFromIntegration(target, callValue, methodData);
-
         customInfo.resultTokensInTransaction = IERC20(customInfo.resultToken)
             .balanceOf(address(customInfo.strategy))
             .sub(customInfo.resultTokensInStrategy);
@@ -167,12 +157,8 @@ abstract contract CustomIntegration is BaseIntegration, ReentrancyGuard, ICustom
         _validatePreExitCustomData(customInfo);
 
         // Pre actions
-        (address targetAddressP, uint256 callValueP, bytes memory methodDataP) = _getPreActionCallData(
-            _strategy,
-            customInfo.addressParam,
-            _resultTokensIn,
-            1
-        );
+        (address targetAddressP, uint256 callValueP, bytes memory methodDataP) =
+            _getPreActionCallData(_strategy, customInfo.addressParam, _resultTokensIn, 1);
         if (targetAddressP != address(0)) {
             // Approve spending of the pre action token
             (address approvalAsset, address spenderPre) = _preActionNeedsApproval(customInfo.addressParam, 1);
@@ -185,13 +171,8 @@ abstract contract CustomIntegration is BaseIntegration, ReentrancyGuard, ICustom
 
         // Approve spending of the result token
         customInfo.strategy.invokeApprove(_getSpender(_data, 1), customInfo.resultToken, _resultTokensIn);
-        (address target, uint256 callValue, bytes memory methodData) = _getExitCalldata(
-            _strategy,
-            _data,
-            _resultTokensIn,
-            _tokensOut,
-            _minAmountsOut
-        );
+        (address target, uint256 callValue, bytes memory methodData) =
+            _getExitCalldata(_strategy, _data, _resultTokensIn, _tokensOut, _minAmountsOut);
         customInfo.strategy.invokeFromIntegration(target, callValue, methodData);
 
         // Post actions
@@ -250,11 +231,12 @@ abstract contract CustomIntegration is BaseIntegration, ReentrancyGuard, ICustom
         bytes calldata /* _data */
     ) external view virtual override returns (address[] memory, uint256[] memory);
 
-    function getOutputTokensAndMinAmountOut(
-        address _strategy,
-        bytes calldata _data,
-        uint256 _liquidity
-    ) external view virtual override returns (address[] memory exitTokens, uint256[] memory _minAmountsOut);
+    function getOutputTokensAndMinAmountOut(address _strategy, bytes calldata _data, uint256 _liquidity)
+        external
+        view
+        virtual
+        override
+        returns (address[] memory exitTokens, uint256[] memory _minAmountsOut);
 
     /* ============ Internal Functions ============ */
 
