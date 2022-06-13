@@ -267,7 +267,7 @@ describe('Balancer V2 integration', function () {
       }
 
       const poolAddress = typeof(data.poolAddress) === 'function' ? data.poolAddress() : data.poolAddress;
-      const vault = await ethers.getContractAt("IVault", "0xBA12222222228d8Ba445958a75a0704d566BF2C8");
+      const vault = await ethers.getContractAt("IVault", BALANCER_VAULT);
       const basePool = await ethers.getContractAt("BasePool", poolAddress);
       const poolId = await basePool.getPoolId();
       const bptToken = await getERC20(poolAddress);
