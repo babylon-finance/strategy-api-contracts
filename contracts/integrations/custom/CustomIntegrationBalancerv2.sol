@@ -17,7 +17,7 @@ import {BytesLib} from '../../lib/BytesLib.sol';
 import {ControllerLib} from '../../lib/ControllerLib.sol';
 import {PoolBalances} from '@balancer-labs/v2-vault/contracts/PoolBalances.sol';
 
-import {WeightedMath} from './WeightedMath.sol';
+import {WeightedMath} from '@balancer-labs/v2-pool-weighted/contracts/WeightedMath.sol';
 
 /**
  * @title Custom integration for the Balancer V2 protocol
@@ -25,7 +25,7 @@ import {WeightedMath} from './WeightedMath.sol';
  *
  * This integration allows Babylon Finance gardens to provide liquidity to Balancer V2 pools.
  */
-contract CustomIntegrationBalancerv2 is CustomIntegration {
+contract CustomIntegrationBalancerv2 is CustomIntegration, WeightedMath {
     using LowGasSafeMath for uint256;
 
     /* ============ State Variables ============ */
@@ -62,7 +62,7 @@ contract CustomIntegrationBalancerv2 is CustomIntegration {
         if (address(pool.getVault()) != vaultAddress) {
             return false;
         }
-        
+
         IVault vault = IVault(vaultAddress);
         bytes32 poolId = pool.getPoolId();
 
@@ -253,7 +253,7 @@ contract CustomIntegrationBalancerv2 is CustomIntegration {
             );
         }
 
-        require(tokenBalanceTotal > 0, "Balance of all tokens in USDC cannot be zero!");
+        require(tokenBalanceTotal > 0, 'Balance of all tokens in USDC cannot be zero!');
 
         for (uint8 i = 0; i < poolTokens.length; ++i) {
             _inputTokens[i] = address(poolTokens[i]);
