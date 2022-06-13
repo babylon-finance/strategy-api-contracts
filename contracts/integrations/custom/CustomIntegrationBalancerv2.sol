@@ -31,7 +31,6 @@ contract CustomIntegrationBalancerv2 is CustomIntegration, WeightedMath {
     /* ============ State Variables ============ */
 
     address private constant vaultAddress = 0xBA12222222228d8Ba445958a75a0704d566BF2C8;
-    address private constant usdcAddress = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
 
     // Allowable slippage for the price of pool tokens in percent.
     uint8 private constant priceSlippage = 5;
@@ -249,7 +248,7 @@ contract CustomIntegrationBalancerv2 is CustomIntegration, WeightedMath {
 
         for (uint8 i = 0; i < poolTokens.length; ++i) {
             tokenBalanceTotal += _getBalanceFullDecimals(balances[i], poolTokens[i]).mul(
-                _getPrice(address(poolTokens[i]), address(usdcAddress))
+                _getPrice(address(poolTokens[i]), USDC)
             );
         }
 
@@ -258,8 +257,8 @@ contract CustomIntegrationBalancerv2 is CustomIntegration, WeightedMath {
         for (uint8 i = 0; i < poolTokens.length; ++i) {
             _inputTokens[i] = address(poolTokens[i]);
             _inputWeights[i] =
-                (_getBalanceFullDecimals(balances[i], poolTokens[i]) * (10**18)).mul(
-                    _getPrice(address(poolTokens[i]), address(usdcAddress))
+                (_getBalanceFullDecimals(balances[i], poolTokens[i]).mul(10**18)).mul(
+                    _getPrice(address(poolTokens[i]), USDC)
                 ) /
                 tokenBalanceTotal;
         }
@@ -367,7 +366,7 @@ contract CustomIntegrationBalancerv2 is CustomIntegration, WeightedMath {
 
     function _getBalanceFullDecimals(uint256 _balance, IERC20 _token) private view returns (uint256) {
         ERC20 tokenMetadata = ERC20(address(_token));
-        return _balance * (10**(18 - tokenMetadata.decimals()));
+        return _balance.mul(10**(18 - tokenMetadata.decimals()));
     }
 
     function _getJoinRequest(
