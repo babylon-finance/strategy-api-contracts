@@ -21,63 +21,63 @@ const LUSD_WHALE = '0x66017d22b0f8556afdd19fc67041899eb65a21bb';
 
 const IDLE_VAULTS = {
   bestYield: {
-    // DAI: '0x3fe7940616e5bc47b0775a0dccf6237893353bb4',
-    // USDC: '0x5274891bEC421B39D23760c04A6755eCB444797C',
-    // USDT: '0xF34842d05A1c888Ca02769A633DF37177415C2f8',
-    // SUSD: '0xf52cdcd458bf455aed77751743180ec4a595fd3f',
-    // TUSD: '0xc278041fdd8249fe4c1aad1193876857eea3d68c',
-    // WBTC: '0x8C81121B15197fA0eEaEE1DC75533419DcfD3151',
-    // WETH: '0xc8e6ca6e96a326dc448307a5fde90a0b21fd7f80',
-    // RAI: '0x5c960a3dcc01be8a0f49c02a8cebcacf5d07fabe',
-    // FEI: '0xb2d5CB72A621493fe83C6885E4A776279be595bC'
+    DAI: '0x3fe7940616e5bc47b0775a0dccf6237893353bb4',
+    USDC: '0x5274891bEC421B39D23760c04A6755eCB444797C',
+    USDT: '0xF34842d05A1c888Ca02769A633DF37177415C2f8',
+    SUSD: '0xf52cdcd458bf455aed77751743180ec4a595fd3f',
+    TUSD: '0xc278041fdd8249fe4c1aad1193876857eea3d68c',
+    WBTC: '0x8C81121B15197fA0eEaEE1DC75533419DcfD3151',
+    WETH: '0xc8e6ca6e96a326dc448307a5fde90a0b21fd7f80',
+    RAI: '0x5c960a3dcc01be8a0f49c02a8cebcacf5d07fabe',
+    FEI: '0xb2d5CB72A621493fe83C6885E4A776279be595bC'
   },
   perpetualYield: {
-    // 'Idle DAI': {
-    //   tranches: {
-    //     senior: '0xe9ada97bdb86d827ecbaacca63ebcd8201d8b12e',
-    //     junior: '0x730348a54ba58f64295154f0662a08cbde1225c2'
-    //   }
-    // },
-    // 'Idle FEI': {
-    //   tranches: {
-    //     senior: '0x9ce3a740df498646939bcbb213a66bbfa1440af6',
-    //     junior: '0x2490d810bf6429264397ba721a488b0c439aa745'
-    //   }
-    // },
-    // 'Lido stETH': {
-    //   tranches: {
-    //     senior: '0x2688fc68c4eac90d9e5e1b94776cf14eade8d877',
-    //     junior: '0x3a52fa30c33caf05faee0f9c5dfe5fd5fe8b3978'
-    //   }
-    // },
-    // 'Convex FRAX3Crv': {
-    //   curvePool: '0xd632f22692FaC7611d2AA1C0D552930D43CAEd3B',
-    //   tranches: {
-    //     senior: '0x15794da4dcf34e674c18bbfaf4a67ff6189690f5',
-    //     junior: '0x18cf59480d8c16856701f66028444546b7041307'
-    //   }
-    // },
-    // 'Convex MIM3Crv': {
-    //   curvePool: '0x5a6A4D54456819380173272A5E8E9B9904BdF41B',
-    //   tranches: {
-    //     senior: '0xfc96989b3df087c96c806318436b16e44c697102',
-    //     junior: '0x5346217536852cd30a5266647ccbb6f73449cbd1'
-    //   }
-    // },
-    // 'Convex steCrv': {
-    //   curvePool: '0xDC24316b9AE028F1497c275EB9192a3Ea0f67022',
-    //   tranches: {
-    //     senior: '0x060a53bcfdc0452f35ebd2196c6914e0152379a6',
-    //     junior: '0xd83246d2bcbc00e85e248a6e9aa35d0a1548968e'
-    //   }
-    // },
-    // 'Convex ALUSDCrv': {
-    //   curvePool: '0x43b4FdFD4Ff969587185cDB6f0BD875c5Fc83f8c',
-    //   tranches: {
-    //     senior: '0x790e38d85a364dd03f682f5ecdc88f8ff7299908',
-    //     junior: '0xa0e8c9088afb3fa0f40ecdf8b551071c34aa1aa4'
-    //   }
-    // },
+    'Idle DAI': {
+      tranches: {
+        senior: '0xe9ada97bdb86d827ecbaacca63ebcd8201d8b12e',
+        junior: '0x730348a54ba58f64295154f0662a08cbde1225c2'
+      }
+    },
+    'Idle FEI': {
+      tranches: {
+        senior: '0x9ce3a740df498646939bcbb213a66bbfa1440af6',
+        junior: '0x2490d810bf6429264397ba721a488b0c439aa745'
+      }
+    },
+    'Lido stETH': {
+      tranches: {
+        senior: '0x2688fc68c4eac90d9e5e1b94776cf14eade8d877',
+        junior: '0x3a52fa30c33caf05faee0f9c5dfe5fd5fe8b3978'
+      }
+    },
+    'Convex FRAX3Crv': {
+      curvePool: '0xd632f22692FaC7611d2AA1C0D552930D43CAEd3B',
+      tranches: {
+        senior: '0x15794da4dcf34e674c18bbfaf4a67ff6189690f5',
+        junior: '0x18cf59480d8c16856701f66028444546b7041307'
+      }
+    },
+    'Convex MIM3Crv': {
+      curvePool: '0x5a6A4D54456819380173272A5E8E9B9904BdF41B',
+      tranches: {
+        senior: '0xfc96989b3df087c96c806318436b16e44c697102',
+        junior: '0x5346217536852cd30a5266647ccbb6f73449cbd1'
+      }
+    },
+    'Convex steCrv': {
+      curvePool: '0xDC24316b9AE028F1497c275EB9192a3Ea0f67022',
+      tranches: {
+        senior: '0x060a53bcfdc0452f35ebd2196c6914e0152379a6',
+        junior: '0xd83246d2bcbc00e85e248a6e9aa35d0a1548968e'
+      }
+    },
+    'Convex ALUSDCrv': {
+      curvePool: '0x43b4FdFD4Ff969587185cDB6f0BD875c5Fc83f8c',
+      tranches: {
+        senior: '0x790e38d85a364dd03f682f5ecdc88f8ff7299908',
+        junior: '0xa0e8c9088afb3fa0f40ecdf8b551071c34aa1aa4'
+      }
+    },
 
     // No swap route to any of these tokens, so leaving it out of the tests for now..
     // 'Convex 3EUR': {
@@ -88,13 +88,13 @@ const IDLE_VAULTS = {
     //   }
     // },
 
-    // 'Convex musd3CRV': {
-    //   curvePool: '0x8474DdbE98F5aA3179B3B3F5942D724aFcdec9f6',
-    //   tranches: {
-    //     senior: '0x4585f56b06d098d4edbfc5e438b8897105991c6a',
-    //     junior: '0xfb08404617b6afab0b19f6ceb2ef9e07058d043c'
-    //   }
-    // },
+    'Convex musd3CRV': {
+      curvePool: '0x8474DdbE98F5aA3179B3B3F5942D724aFcdec9f6',
+      tranches: {
+        senior: '0x4585f56b06d098d4edbfc5e438b8897105991c6a',
+        junior: '0xfb08404617b6afab0b19f6ceb2ef9e07058d043c'
+      }
+    },
 
     // No price for this trade, either
     // 'Convex pbtc/sbtcCRV': {
