@@ -12,6 +12,7 @@ import {BytesLib} from '../../lib/BytesLib.sol';
 import {ControllerLib} from '../../lib/ControllerLib.sol';
 import {IBorrowerOperations} from '../../interfaces/external/liquity/IBorrowerOperations.sol';
 import {ITroveManager} from '../../interfaces/external/liquity/ITroveManager.sol';
+import {IPriceFeed} from '../../interfaces/external/liquity/IPriceFeed.sol';
 
 /**
  * @title CustomIntegrationLiquity
@@ -20,7 +21,8 @@ import {ITroveManager} from '../../interfaces/external/liquity/ITroveManager.sol
  * Custom integration for Liquity Lend and Borrow LUSD
  */
 contract CustomIntegrationLiquity is CustomIntegration {
-    uint constant LIQUITY_MAX_FEE_PERCENTAGE = 0.01 * 1e18; // 1%
+    // the fee varies between 0.5% and 5% depending on LUSD redemption volumes.
+    uint constant LIQUITY_MAX_FEE_PERCENTAGE = 0.05 * 1e18; // 5%
 
     using LowGasSafeMath for uint256;
     using PreciseUnitMath for uint256;
@@ -31,6 +33,7 @@ contract CustomIntegrationLiquity is CustomIntegration {
 
     /* Add State variables here if any. Pass to the constructor */
     IBorrowerOperations private immutable liquityBorrowerOperations;
+    uint private immutable babylonLiquidationBuffer;
 
     /* ============ Constructor ============ */
 
@@ -42,6 +45,11 @@ contract CustomIntegrationLiquity is CustomIntegration {
     constructor(IBabController _controller, IBorrowerOperations _liquityBorrowerOperations) CustomIntegration('custom_liquity', _controller) {
         require(address(_controller) != address(0), 'invalid address');
         liquityBorrowerOperations = _liquityBorrowerOperations;
+
+        // when creating this custom strategy, don't allow borrowing up
+        // to the maximum collateral ratio. ensure that users have at least
+        // a 5% buffer.
+        babylonLiquidationBuffer = 50000000000000000;
     }
 
     /* =============== Internal Functions ============== */
@@ -53,8 +61,12 @@ contract CustomIntegrationLiquity is CustomIntegration {
      * @return bool                      True if the data is correct
      */
     function _isValid(bytes memory _data) internal view override returns (bool) {
-        (, uint amountLUSDToBorrow) = abi.decode(_data, (address, uint));
-        return amountLUSDToBorrow >= liquityBorrowerOperations.MIN_NET_DEBT();
+        (, uint targetCollateralRatio) = abi.decode(_data, (address, uint));
+
+        // ensure that the target collateral ratio is above the minimum
+        // expressed with 1e18 decimals of precision, i.e. 1.5 * 1e18
+        // for a 150% collateral ratio
+        return targetCollateralRatio >= liquityBorrowerOperations.MCR() + babylonLiquidationBuffer;
     }
 
     /**
@@ -110,7 +122,8 @@ contract CustomIntegrationLiquity is CustomIntegration {
             bytes memory
         )
     {
-        (, uint amountLUSDToBorrow) = abi.decode(_data, (address, uint));
+        (, uint targetCollateralRatio) = abi.decode(_data, (address, uint));
+        uint amountLUSDToBorrow = _maxAmountsIn[0].preciseMul(_getEthPrice()).preciseDiv(targetCollateralRatio);
 
         return (address(liquityBorrowerOperations), _maxAmountsIn[0], abi.encodeWithSelector(
           IBorrowerOperations.openTrove.selector,
@@ -135,7 +148,7 @@ contract CustomIntegrationLiquity is CustomIntegration {
      * @return bytes                     Trade calldata
      */
     function _getExitCalldata(
-        address _strategy,
+        address, /* _strategy */
         bytes calldata, /* _data */
         uint256, /* _resultTokensIn */
         address[] calldata, /* _tokensOut */
@@ -150,6 +163,10 @@ contract CustomIntegrationLiquity is CustomIntegration {
             bytes memory
         )
     {
+        // calling this function requires us to have the requisite amount of LUSD
+        // in the strategy. remember that the amount of LUSD that we owe will be
+        // more than the amount that we receieved, as it includes the borrowing fee.
+        // we will need to obtain this LUSD from another source before closing the strategy.
         return (address(liquityBorrowerOperations), 0, abi.encodeWithSelector(
           IBorrowerOperations.closeTrove.selector
         ));
@@ -205,7 +222,10 @@ contract CustomIntegrationLiquity is CustomIntegration {
         address[] memory outputTokens = new address[](1);
         // outputTokens[0] is address(0) (ether)
         uint256[] memory outputAmounts = new uint256[](1);
-        outputAmounts[0] = _getCollateral(_strategy); // TODO: deal with fees
+
+        // fees are paid in LUSD, so the output amount when closing the trove will
+        // just be the amount of ETH in the trove
+        outputAmounts[0] = _getCollateral(_strategy);
         return (outputTokens, outputAmounts);
     }
 
@@ -217,14 +237,31 @@ contract CustomIntegrationLiquity is CustomIntegration {
      * @return uint256                    Amount of result tokens to receive
      */
     function getPriceResultToken(
-        bytes calldata _data,
-        address /* _tokenDenominator */
-    ) external pure override returns (uint256) {
-        (, uint amountLUSDToBorrow) = abi.decode(_data, (address, uint));
-        return amountLUSDToBorrow; // we receive the exact number of LUSD tokens that we requested
+        bytes calldata, /* _data */
+        address _tokenDenominator
+    ) external view override returns (uint256) {
+      address _strategy = 0xcEd6914a2d641b2aAcBF78dB94648741e5AA870e; // TODO: pass the _strategy once the interface changes
+      uint collateralAmountEth = _getCollateral(_strategy);
+      uint collateralAmountUsd = collateralAmountEth.preciseMul(_getEthPrice());
+      uint debtAmountUsd = _getDebt(_strategy);
+      uint pricePerTokenUsd = collateralAmountUsd.add(debtAmountUsd).div(debtAmountUsd);
+
+      return pricePerTokenUsd.preciseMul(
+        // convert from USD -> tokenDenominator
+        // TODO: use USD here, instead of LUSD? But how would we do that?
+        _getPrice(liquityBorrowerOperations.lusdToken(), _tokenDenominator)
+      );
+    }
+
+    function _getEthPrice() internal view returns (uint) {
+      return IPriceFeed(liquityBorrowerOperations.priceFeed()).lastGoodPrice();
     }
 
     function _getCollateral(address _strategy) internal view returns (uint) {
       return ITroveManager(liquityBorrowerOperations.troveManager()).getTroveColl(_strategy);
+    }
+
+    function _getDebt(address _strategy) internal view returns (uint) {
+      return ITroveManager(liquityBorrowerOperations.troveManager()).getTroveDebt(_strategy);
     }
 }
