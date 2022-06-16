@@ -7,6 +7,9 @@ const { eth } = require('../../lib/helpers');
 const { deployments } = require('hardhat');
 const { deploy } = deployments;
 
+const fetch = require('node-fetch');
+
+
 const WETH = getTokenAddress('WETH');
 const NFT_URI = 'https://babylon.mypinata.cloud/ipfs/QmcL826qNckBzEk2P11w4GQrrQFwGvR6XmUCuQgBX9ck1v';
 const NFT_SEED = '504592746';
@@ -66,67 +69,118 @@ describe('Balancer V2 integration', function () {
   // Creates a new weighted pool with three tokens
   async function createPool() {
     const WEIGHTED_POOL_FACTORY = '0x8E9aa87E45e92bad84D5F8DD1bff34Fb92637dE9';
-  
+
     const NAME = 'Three-token Test Pool';
     const SYMBOL = '60AAVE-15WETH-25USDT';
     const swapFeePercentage = eth(0.005); // 0.5%
     const weights = [eth(0.6), eth(0.15), eth(0.25)];
     const tokens = [getTokenAddress('AAVE'), getTokenAddress('WETH'), getTokenAddress('USDT')];
-  
+
     const factory = await ethers.getContractAt('IWeightedPoolFactory', WEIGHTED_POOL_FACTORY);
-  
+
     const tx = await factory.create(NAME, SYMBOL, tokens, weights, swapFeePercentage, ADDRESS_ZERO);
     const rc = await tx.wait();
-  
+
     const events = rc.events.filter((e) => e.topics[0] === '0x83a48fbcfc991335314e74d0496aab6a1987e992ddc85dddbcc4d6dd6ef2e9fc') // CreatePool
     const str = events[0].topics[1].toString();
     const address = str.slice(0, 2) + str.slice(26, str.length);
-  
+
     return address;
   }
-  
+
   async function joinPool(bob) {
     const aaveHolder = await impersonateAddress(getHolderForToken('AAVE'));
     const usdtHolder = await impersonateAddress(getHolderForToken('USDT'));
     const wethHolder = await impersonateAddress(getHolderForToken('WETH'));
-  
+
     const AAVE = await getERC20(getTokenAddress('AAVE'));
     const USDT = await getERC20(getTokenAddress('USDT'));
     const WETH = await getERC20(getTokenAddress('WETH'));
-  
+
     const basePool = await ethers.getContractAt("BasePool", weightedPool3Token);
     const poolId = await basePool.getPoolId();
-  
+
     // Transferring to bob
     const usdtAmount = ethers.BigNumber.from(1000000).mul(ethers.BigNumber.from(10).pow(6));
     await AAVE.connect(aaveHolder).transfer(bob.address, eth(30000));
     await WETH.connect(wethHolder).transfer(bob.address, eth(300));
     await USDT.connect(usdtHolder).transfer(bob.address, usdtAmount);
-  
+
     // Join pool
     const joinKindInit = 0; /* INIT */
     const maxAmountsIn = [eth(30000), eth(300), usdtAmount];
     const minimumBPT = 0;
-  
+
     const assetsJoin = [AAVE.address, WETH.address, USDT.address];
-  
+
     const userDataJoin = new ethers.utils.AbiCoder().encode(
       ['uint256', 'uint256[]', 'uint256'],
       [joinKindInit, maxAmountsIn, minimumBPT]);
-  
+
     const joinPoolRequest = {
       assets: assetsJoin,
       maxAmountsIn: maxAmountsIn,
       userData: userDataJoin,
       fromInternalBalance: false
     }
-  
+
     const vault = await ethers.getContractAt("IVault", BALANCER_VAULT);
     await USDT.connect(bob).approve(vault.address, eth(400000000000000000));
     await WETH.connect(bob).approve(vault.address, eth(400000000000000000));
     await AAVE.connect(bob).approve(vault.address, eth(400000000000000000));
-  
+
     await vault.connect(bob).joinPool(poolId, bob.address, bob.address, joinPoolRequest);
+  }
+
+  async function getPoolsGraphQL() {
+    const acceptedPoolTypes = ['"Weighted"', '"Stable"', '"MetaStable"']
+
+    const result = [];
+
+    for (let i = 0; i < acceptedPoolTypes.length; i++) {
+
+      const poolType = acceptedPoolTypes[i];
+
+      const data = JSON.stringify({
+        // To be defined how much minimum liquidity is ok
+        query: `{
+                pools(where: {poolType: ${poolType}, totalLiquidity_gt: "10000"}) {  
+                  address
+                  name
+                }
+              }
+           `,
+      });
+
+      const response = await fetch(
+        'https://api.thegraph.com/subgraphs/name/balancer-labs/balancer-v2',
+        {
+          method: 'post',
+          body: data,
+          headers: {
+            'Content-Type': 'application/json',
+            'Content-Length': data.length,
+            Authorization:
+              'Apikey DONOTSENDAPIKEYS',
+          },
+        }
+      );
+
+      const json = await response.json();
+      result.push.apply(result, json["data"]["pools"])
+
+    }
+
+    for (let i = 0; i < result.length; i++) {
+
+      BALANCER_POOLS[result[i]["name"]] = {
+        poolAddress: result[i]["address"]
+      }
+
+    }
+
+    console.log(BALANCER_POOLS);
+
   }
 
   before(async () => {
@@ -143,6 +197,8 @@ describe('Balancer V2 integration', function () {
 
     weightedPool3Token = await createPool();
     await joinPool(bob);
+
+    await getPoolsGraphQL()
 
     // Creates a garden with custom integrations enabled
     const contribution = eth(1);
@@ -190,7 +246,7 @@ describe('Balancer V2 integration', function () {
     const testFn = data.skip ? it.skip : it;
 
     testFn(`can deploy a strategy with the Balancer V2 integration: ${poolName}`, async function () {
-      const poolAddress = typeof(data.poolAddress) === 'function' ? data.poolAddress() : data.poolAddress;
+      const poolAddress = typeof (data.poolAddress) === 'function' ? data.poolAddress() : data.poolAddress;
       const vault = await ethers.getContractAt("IVault", BALANCER_VAULT);
       const basePool = await ethers.getContractAt("BasePool", poolAddress);
       const poolId = await basePool.getPoolId();
@@ -266,7 +322,7 @@ describe('Balancer V2 integration', function () {
         this.skip();
       }
 
-      const poolAddress = typeof(data.poolAddress) === 'function' ? data.poolAddress() : data.poolAddress;
+      const poolAddress = typeof (data.poolAddress) === 'function' ? data.poolAddress() : data.poolAddress;
       const vault = await ethers.getContractAt("IVault", BALANCER_VAULT);
       const basePool = await ethers.getContractAt("BasePool", poolAddress);
       const poolId = await basePool.getPoolId();

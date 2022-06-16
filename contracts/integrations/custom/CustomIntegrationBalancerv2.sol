@@ -254,11 +254,9 @@ contract CustomIntegrationBalancerv2 is CustomIntegration, WeightedMath {
 
         for (uint8 i = 0; i < poolTokens.length; ++i) {
             _inputTokens[i] = address(poolTokens[i]);
-            _inputWeights[i] =
-                (_getBalanceFullDecimals(balances[i], poolTokens[i]).mul(10**18)).mul(
-                    _getPrice(address(poolTokens[i]), USDC)
-                ) /
-                tokenBalanceTotal;
+            _inputWeights[i] = (_getBalanceFullDecimals(balances[i], poolTokens[i]).mul(10**18))
+                .mul(_getPrice(address(poolTokens[i]), USDC))
+                .div(tokenBalanceTotal);
         }
 
         return (_inputTokens, _inputWeights);
