@@ -246,16 +246,16 @@ contract CustomIntegrationBalancerv2 is CustomIntegration, WeightedMath {
 
         for (uint8 i = 0; i < poolTokens.length; ++i) {
             tokenBalanceTotal += _getBalanceFullDecimals(balances[i], poolTokens[i]).mul(
-                _getPrice(address(poolTokens[i]), USDC)
+                _getPrice(address(poolTokens[i]), WETH)
             );
         }
 
-        require(tokenBalanceTotal > 0, 'Balance of all tokens in USDC cannot be zero!');
+        require(tokenBalanceTotal > 0, 'Balance of all tokens in WETH cannot be zero!');
 
         for (uint8 i = 0; i < poolTokens.length; ++i) {
             _inputTokens[i] = address(poolTokens[i]);
             _inputWeights[i] = (_getBalanceFullDecimals(balances[i], poolTokens[i]).mul(10**18))
-                .mul(_getPrice(address(poolTokens[i]), USDC))
+                .mul(_getPrice(address(poolTokens[i]), WETH))
                 .div(tokenBalanceTotal);
         }
 
