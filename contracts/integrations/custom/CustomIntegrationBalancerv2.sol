@@ -30,9 +30,6 @@ contract CustomIntegrationBalancerv2 is CustomIntegration, WeightedMath {
 
     address private constant vaultAddress = 0xBA12222222228d8Ba445958a75a0704d566BF2C8;
 
-    // Allowable slippage for the price of pool tokens in percent.
-    uint8 private constant priceSlippage = 5;
-
     /* ============ Constructor ============ */
 
     /**
@@ -293,7 +290,7 @@ contract CustomIntegrationBalancerv2 is CustomIntegration, WeightedMath {
         exitTokens = new address[](tokens.length);
         for (uint256 i = 0; i < tokens.length; ++i) {
             exitTokens[i] = address(tokens[i]);
-            amountsOutSlippage[i] = amountsOut[i].mul(100 - priceSlippage).div(100);
+            amountsOutSlippage[i] = amountsOut[i].mul(uint256(10**18).sub(SLIPPAGE_ALLOWED)).div(10**18);
         }
 
         return (exitTokens, amountsOutSlippage);
@@ -350,7 +347,7 @@ contract CustomIntegrationBalancerv2 is CustomIntegration, WeightedMath {
             .div(10**balToken.decimals()); // balToken * balDecimals // * denomDecimals // * denomDecimals // / denomTokens / denomDecimals) // / balDecimals
 
         // add price slippage
-        uint256 priceWithSlippage = price.mul(100 - priceSlippage).div(100);
+        uint256 priceWithSlippage = price.mul(uint256(10**18).sub(SLIPPAGE_ALLOWED)).div(10**18);
 
         // Babylon expects the result to always have 18 decimals, regardless of the decimals of denominator token
         uint256 priceWithSlippageFullDecimals = _getBalanceFullDecimals(priceWithSlippage, denomToken);
